@@ -51,7 +51,7 @@ class Status
     const CODE_MATCH_COUNT_LIMIT = 329;      //最多只能添加50场比赛
     const CODE_PHONE_CODE_LIMIT = 330;      //短信一个号码每天只有10条
     const CODE_PHONE_CODE_LIMIT_TIME = 331;      //1分钟只能一次
-
+    const CODE_WRONG_STATUS = 332; //用户状态异常
 
 
     //系统错误
@@ -110,6 +110,7 @@ class Status
         self::CODE_PHONE_CODE_LIMIT => '短信发送超限，请明天再试',
         self::CODE_PHONE_CODE_LIMIT_TIME => '频率过快，请稍后再试',
         self::CODE_RES_EXIST => '数据已经存在',
+        self::CODE_WRONG_STATUS => '该用户已注销或被封禁，详情咨询客服',
 
         self::CODE_ADD_POST_SENSITIVE  => '内容包含敏感词：%s',
 

@@ -26,7 +26,10 @@ class PhoneTask implements TaskInterface
         $content = sprintf(PhoneCodeService::$copying, $this->taskData['code']);
 
         $xsend = $phoneCodeS->sendMess($this->taskData['mobile'], $content);
+        Log::getInstance()->info('验证码发送-' . json_encode($xsend));
+
         if ($xsend['status'] !== PhoneCodeService::STATUS_SUCCESS) {
+            Log::getInstance()->info('验证码发送失败-' . json_encode($xsend));
         } else {
             $data = [
                 'mobile' => $this->taskData['mobile'],
