@@ -1,5 +1,6 @@
 <?php
-foreach (["./vendor/bin/easyswoole", "./bin/easyswoole" ] as $file) {
+require_once('./vendor/easyswoole/easyswoole/bin/easyswoole');
+foreach (["./vendor/bin/easyswoole", "./bin/easyswoole"] as $file) {
     if (file_exists($file)) {
         require $file;
         break;

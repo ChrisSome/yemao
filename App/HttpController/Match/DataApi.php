@@ -1179,7 +1179,12 @@ class DataApi extends FrontUserController
 
                     });
 
+                    if (!$teamIds || !$stageIds) {
+                        $return['competition_describe'] = '';
+                        $return['formatTable'] = null;
 
+                        return $this->writeJson(Status::CODE_OK, Status::$msg[Status::CODE_OK], $return);
+                    }
                     $teams = AdminTeam::getInstance()->field(['team_id', 'short_name_zh', 'logo'])->where('team_id', $teamIds, 'in')->all();
                     foreach ($teams as $team) {
                         $formatTeams[$team['team_id']] = $team;
@@ -1251,6 +1256,7 @@ class DataApi extends FrontUserController
             $homeTeamIds = array_column($matchList, 'home_team_id');
             $awayTeamIds = array_column($matchList, 'away_team_id');
             $teamIds = array_unique(array_merge($homeTeamIds, $awayTeamIds));
+            if (!$teamIds) return $this->writeJson(Status::CODE_OK, Status::$msg[Status::CODE_OK], null);
             $teams = AdminTeam::getInstance()->field(['team_id', 'name_zh', 'short_name_zh'])->where('team_id', $teamIds, 'in')->all();
             array_walk($teams, function ($v) use(&$formatTeams) {
                 $formatTeams[$v->team_id] = $v;
@@ -1277,8 +1283,6 @@ class DataApi extends FrontUserController
                     [$data['half_home_scores'], $data['half_away_scores']] = AppFunc::getHalfScore($decodeHomeScore, $decodeAwayScore);
                     [$data['home_corner'], $data['away_corner']] = AppFunc::getCorner($decodeHomeScore, $decodeAwayScore);
                     $result['match_list'][] = $data;
-                } else {
-                    $format[] = 2;
                 }
             }
 
