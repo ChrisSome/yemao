@@ -1303,10 +1303,7 @@ class Crontab extends FrontUserController
                 $matchTliveRes = AdminMatchTlive::getInstance()->where('match_id', $matchId)->get();
                 if (isset($matchTliveRes->is_stop) && $matchTliveRes->is_stop == 1) continue;
 
-                //不在热门赛事中  跳过
-                if (!AppFunc::isInHotCompetition($match->competition_id)) {
-                    continue;
-                }
+
                 $status = $item['score'][1];
                 Cache::set('football-match-status-' . $matchId, $status, 60 * 240);
                 //异常比赛给提示
@@ -1331,7 +1328,10 @@ class Crontab extends FrontUserController
                     TaskManager::getInstance()->async(new MatchNotice(['match_id' => $matchId,  'item' => $item,'score' => $item['score'],  'type'=>12]));
                 }
 
-
+                //不在热门赛事中  跳过
+                if (!AppFunc::isInHotCompetition($match->competition_id)) {
+                    continue;
+                }
                 $match_trend_info = [];
                 if (isset($matchTliveRes->match_trend)) {
                     $match_trend_info = json_decode($matchTliveRes->match_trend, true);
