@@ -11,6 +11,7 @@ abstract class BaseController extends Controller
 {
     public function index()
     {
+
         $this->actionNotFound('index');
     }
 
