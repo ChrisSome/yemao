@@ -771,7 +771,7 @@ class BasketballApi extends FrontUserController
 
         switch ($type) {
             case 1: //基本信息
-                $selectSeasonId = $seasonList : end($seasonList)['season_id'] : 0;
+                $selectSeasonId = $seasonList ? end($seasonList)['season_id'] : 0;
                 $teamRankInfo = $teamRankInfos = [];
                 if ($seasonTable = BasketballSeasonTable::getInstance()->where('season_id', $selectSeasonId)->get()) {
                     $table = json_decode($seasonTable->tables, true);
