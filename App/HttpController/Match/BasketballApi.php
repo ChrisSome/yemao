@@ -49,7 +49,7 @@ class BasketballApi extends FrontUserController
         'PF' => '大前锋',
         'C' => '中锋',
         'G' => '后卫',
-        'F' => '前锋'
+        'F' => '前锋',
     ];
 
     const PRE_PLAYER_LOGO = 'https://cdn.sportnanoapi.com/basketball/player/'; //球员logo前缀
@@ -682,7 +682,7 @@ class BasketballApi extends FrontUserController
                     'age' => $player->age,
                     'birthday' => date('Y-m-d', $player->birthday),
                     'salary' => AppFunc::changeToWan($player->salary),
-                    'position' => self::PLAYER_POSITION[$player->position],
+                    'position' => $player->position ? self::PLAYER_POSITION[$player->position] : '',
                     'honorList' => $playerHonor
                 ];
 
@@ -771,7 +771,7 @@ class BasketballApi extends FrontUserController
 
         switch ($type) {
             case 1: //基本信息
-                $selectSeasonId = end($seasonList)['season_id'];
+                $selectSeasonId = $seasonList : end($seasonList)['season_id'] : 0;
                 $teamRankInfo = $teamRankInfos = [];
                 if ($seasonTable = BasketballSeasonTable::getInstance()->where('season_id', $selectSeasonId)->get()) {
                     $table = json_decode($seasonTable->tables, true);

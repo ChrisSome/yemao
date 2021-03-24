@@ -448,6 +448,7 @@ class Login extends FrontUserController
 
             });
         } catch (\Exception $e) {
+            var_dump($e->getMessage());
             return $this->writeJson(Statuses::CODE_ERR, '用户不存在或密码错误');
 
         }
