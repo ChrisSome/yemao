@@ -1567,5 +1567,44 @@ class Crontab extends FrontUserController
 
     }
 
+    /**
+     * 更新球队参加过的所有赛季
+     */
+    public function getTeamsInSeasons()
+    {
+        //当前赛季有球员数据统计的赛季
+        $seasons = AdminSeason::getInstance()
+            ->where('has_team_stats', 1)->order('season_id', 'ASC')->where('season_id', 10088, '>')->limit(1000)->all();
+        if (!$seasons) {
+            return $this->writeJson(Status::CODE_OK, Status::$msg[Status::CODE_OK], 1);
+        }
+        foreach ($seasons as $season) {
+            $selectSeasonId = $season->season_id;
+            Cache::set('update-season-team-stats-seasonid', $selectSeasonId, 60 * 60);
+            $seasonPlayerStats = SeasonTeamPlayer::getInstance()->field(['season_id', 'teams_stats'])->where('season_id', $selectSeasonId)->get();
+            if (!$seasonPlayerStats || !$teamsStats = json_decode($seasonPlayerStats->teams_stats, true)) continue;
+            foreach ($teamsStats as $playerStat) {
+                $playerId = $playerStat['team']['id'];
+                $team = AdminTeam::getInstance()->where('team_id', $playerId)->get();
+                if (!$team) continue;
+                $formatPlayerSeason = json_decode($team->seasons, true);
+                if (!$formatPlayerSeason) {
+                    $team->seasons = json_encode([$selectSeasonId]);
+                } else {
+                    if (!in_array($season->season_id, $formatPlayerSeason)) {
+                        array_push($formatPlayerSeason, $selectSeasonId);
+                        $team->seasons = json_encode($formatPlayerSeason);
+                    }
+                }
+
+                $team->update();
+
+            }
+        }
+        var_dump('123');
+
+
+
+    }
 
 }

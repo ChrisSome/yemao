@@ -579,7 +579,15 @@ class DataApi extends FrontUserController
         if (!empty($competition)) {
             $season = Utils::queryHandler(AdminSeason::getInstance(), 'competition_id=?', $competitionId, 'id, season_id, year', false);
             $currentSeasonId = $selectSeasonId = $competition['cur_season_id'];
+        } else {
+            $seasonIds = !empty($team['seasons']) ? json_decode($team['seasons'], true) : [];
+
+            if ($seasonIds) {
+                $season = AdminSeason::getInstance()->where('season_id', $seasonIds, 'in')->all();
+                $currentSeasonId = $selectSeasonId = end($season)['season_id'];
+            }
         }
+
         if (!empty($this->params['select_season_id'])) $selectSeasonId = $this->params['select_season_id'];
 
         switch ($type) {

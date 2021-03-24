@@ -103,6 +103,7 @@ class Router extends AbstractRouter
             $r->addRoute(['GET'], '/footBall/updateChangingMatch', '/Match/Crontab/updateChangingMatch');   //更新变动比赛
             $r->addRoute(['GET'], '/footBall/getUserInSeasons', '/Match/Crontab/getUserInSeasons');   //更新球员参加过的赛季
             $r->addRoute(['GET'], '/footBall/getTodayMatches', '/Match/Crontab/getTodayMatches');   //更新球员参加过的赛季
+            $r->addRoute(['GET'], '/footBall/getTeamsInSeasons', '/Match/Crontab/getTeamsInSeasons');   //更新球员参加过的赛季
 
 
 
