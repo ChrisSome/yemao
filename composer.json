@@ -10,7 +10,9 @@
         "aliyuncs/oss-sdk-php": "^2.3",
         "ritaswc/zx-ip-address": "^2.0",
         "doctrine/lexer": "^1.2",
-        "easyswoole/annotation": "2.0.3"
+        "easyswoole/annotation": "2.0.3",
+        "ext-iconv": "*",
+        "ext-json": "*"
     },
     "autoload": {
         "psr-4": {
