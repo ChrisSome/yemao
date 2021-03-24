@@ -694,10 +694,15 @@ class BasketballApi extends FrontUserController
                 $seasonIds = json_decode($season, true);
                 $res = BasketballSeasonAllStatsDetail::getInstance()->where('season_id', $seasonIds, 'in')->all();
                 $seasons = BasketballSeasonList::getInstance()->where('season_id', $seasonIds, 'in')->all();
+                if ($seasons) {
+                    $competitionId = end($seasons)['competition_id'];
+                } else {
+                    $competitionId = 0;
+                }
+
                 array_walk($seasons, function ($v, $k) use(&$sortSeasonList) {
                     $sortSeasonList[$v->season_id] = $v;
                 });
-                $competitionId = !empty($this->params['competition_id']) ? (int)$this->params['competition_id'] : 0;
                 if (!$competitionId) return $this->writeJson(Status::CODE_W_PARAM, Status::$msg[Status::CODE_W_PARAM]);
                 $teams = BasketballTeam::getInstance()->field(['team_id', 'short_name_zh'])->where('competition_id', $competitionId)->all();
                 array_walk($teams, function ($tv, $tk) use(&$formatTeams) {
@@ -772,7 +777,7 @@ class BasketballApi extends FrontUserController
         switch ($type) {
             case 1: //基本信息
                 $selectSeasonId = $seasonList ? end($seasonList)['season_id'] : 0;
-                $teamRankInfo = $teamRankInfos = [];
+                $teamRankInfo = null;
                 if ($seasonTable = BasketballSeasonTable::getInstance()->where('season_id', $selectSeasonId)->get()) {
                     $table = json_decode($seasonTable->tables, true);
                     foreach ($table as $tableItem) {
@@ -803,7 +808,7 @@ class BasketballApi extends FrontUserController
                 $selectSeasonId = !empty($this->params['select_season_id']) ? (int)$this->params['select_season_id'] :end($seasonList)['season_id'];
                 $sortTable = [];
                 //赛事球队
-                $competitionId = !empty($this->params['competition_id']) ? (int)$this->params['competition_id'] : 0;
+                $competitionId = $team->competition_id;
                 if (!$competitionId) return $this->writeJson(Status::CODE_W_PARAM, Status::$msg[Status::CODE_W_PARAM]);
 
                 $teams = BasketballTeam::getInstance()->field(['team_id', 'logo', 'name_zh', 'short_name_zh'])->where('competition_id', $competitionId)->all();

@@ -21,9 +21,6 @@ class Upload extends FrontUserController
         $request = $this->request();
         $file = $request->getUploadedFile('file');
         $sUploadType = $request->getRequestParam('type');
-        if (!$sUploadType || !in_array($sUploadType, ['avatar', 'system', 'option', 'other'])) {
-            return $this->writeJson(Status::CODE_ERR, '未知的上传类型');
-        }
         if (!$file) {
             return $this->writeJson(Status::CODE_ERR, '上传图片为空');
         }
@@ -47,16 +44,12 @@ class Upload extends FrontUserController
         if (empty($file)) {
             return $this->writeJson(400, "上传失败", []);
         }
-
-        $data = [
-            'url' => $file,
-        ];
         //return $this->writeJson(200, "OK", $data);
         $data = ['code' => Status::CODE_OK, 'data' => [
             'src' => $file,
             'title' => '上传图片'
         ]];
-        $this->dataJson($data);
+        return $this->writeJson(Status::CODE_ERR, '未知的上传类型', $data);
     }
 
 

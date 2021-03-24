@@ -27,8 +27,8 @@ class Router extends AbstractRouter
         $routes->addGroup('/api', function (RouteCollector $r) {
             $r->addRoute(['GET'], '/user/login', '/User/Login');
             $r->addRoute(['GET'], '/user/{id:\d+}', '/User/User/test');
-            $r->addRoute(['POST'], '/user/upload', '/User/Upload');
             $r->addRoute(['POST'], '/user/ossUpload', '/User/Upload/ossUpload');  //oss上传
+            $r->addRoute(['POST'], '/user/upload', '/User/Upload/index');  //oss上传
             $r->addRoute(['POST'], '/user/info', '/User/User/info');
             $r->addRoute(['POST'], '/user/doLogin', '/User/Login/userLogin'); //登陆接口
             $r->addRoute(['POST'], '/user/wxLogin', '/User/Login/wxLogin'); //微信登陆接口

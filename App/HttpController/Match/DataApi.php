@@ -877,6 +877,9 @@ class DataApi extends FrontUserController
                 $players = $playerIds = [];
                 $tmp = Utils::queryHandler(AdminTeamLineUp::getInstance(), 'team_id=?', $teamId, 'squad');
                 $tmp = json_decode($tmp['squad'], true);
+                if (!$tmp) {
+                    return $this->writeJson(Status::CODE_OK, Status::$msg[Status::CODE_OK], null);
+                }
                 foreach ($tmp as $v) {
                     $id = intval($v['player']['id']);
                     if (!in_array($id, $playerIds)) $playerIds[] = $id;
@@ -1251,7 +1254,7 @@ class DataApi extends FrontUserController
             $selectStageId = !empty($this->params['stage_id']) ? (int)$this->params['stage_id'] : (int)$competition['cur_stage_id'];
             $selectRound = !empty($this->params['round_id']) ? (int)$this->params['round_id'] : (int)$competition['cur_round'];
             $selectGroup = !empty($this->params['group_id']) ? (int)$this->params['group_id'] : 0;
-            $matchList = SeasonMatchList::getInstance()->where('season_id', $selectSeasonId)->all();
+            $matchList = SeasonMatchList::getInstance()->where('season_id', $selectSeasonId)->order('match_time')->all();
 
             $homeTeamIds = array_column($matchList, 'home_team_id');
             $awayTeamIds = array_column($matchList, 'away_team_id');
@@ -1404,7 +1407,7 @@ class DataApi extends FrontUserController
         } elseif ($type == 2) { //球队
             $result = Utils::queryHandler(AdminTeam::getInstance(),
                 'name_zh like ?', [$keywords],
-                'team_id,name_zh,logo', false, 'team_id desc', null, $page, $size);
+                'team_id,name_zh,logo,competition_id', false, 'team_id desc', null, $page, $size);
         } elseif ($type == 3) { //球员
             $result = Utils::queryHandler(AdminPlayer::getInstance(),
                 'name_zh like ?', [$keywords],
@@ -1416,7 +1419,7 @@ class DataApi extends FrontUserController
         } elseif ($type == 5) { //篮球球队
             $result = Utils::queryHandler(BasketballTeam::getInstance(),
                 'name_zh like ?', [$keywords],
-                'team_id,name_zh,logo', false, 'competition_id ASC', null, $page, $size);
+                'team_id,name_zh,logo,competition_id', false, 'competition_id ASC', null, $page, $size);
         } elseif ($type == 4) { //篮球赛事
             $result = Utils::queryHandler(BasketBallCompetition::getInstance(),
                 'short_name_zh like ?', [$keywords],
