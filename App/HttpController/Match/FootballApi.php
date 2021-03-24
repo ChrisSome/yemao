@@ -304,6 +304,7 @@ class FootballApi extends FrontUserController
 
         }
         $res = AdminInterestMatches::getInstance()->where('uid', $this->auth['id'])->where('type', AdminInterestMatches::FOOTBALL_TYPE)->get();
+        if (!$res) return $this->writeJson(Status::CODE_OK, Status::$msg[Status::CODE_OK], []);
         $matchIds = json_decode($res->match_ids, true);
         if (!$matchIds) return $this->writeJson(Status::CODE_OK, Status::$msg[Status::CODE_OK], []);
 

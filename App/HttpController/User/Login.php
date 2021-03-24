@@ -89,7 +89,7 @@ class Login extends FrontUserController
             return $this->writeJson(Statuses::CODE_W_PARAM, Statuses::$msg[Statuses::CODE_W_PARAM]);
         }
         //验证码登陆货账号密码登陆验证通过
-        if (!empty($params['cid']) || trim($params['cid']) != $user->cid) {
+        if (!empty($params['cid']) && trim($params['cid']) != $user->cid) {
             $user->cid = trim($params['cid']);
             $user->update();
         }
