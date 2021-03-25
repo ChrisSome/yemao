@@ -48,8 +48,8 @@ class MatchNotice  implements TaskInterface
         if (!$match = AdminMatch::getInstance()->where('match_id', $match_id)->get()) return;
         $score = $this->taskData['score'];
         $match->status_id = $score[1];
-        $match->home_scores = $score[2];
-        $match->away_scores = $score[3];
+        $match->home_scores = json_encode($score[2]);
+        $match->away_scores = json_encode($score[3]);
         $match->update();
         if ($type == 1) { //进球(包含点球)
             $last_incident_goal = $this->taskData['last_incident'];
