@@ -1541,8 +1541,26 @@ class BasketballApi extends FrontUserController
                     $formatTeamStats = [];
                     foreach ($teamStats as $teamStat) {
                         if ($teamStat['scope'] != 5) continue;
-                        $teamStat['team_info'] = isset($formatTeams[$teamStat['team_id']]) ? $formatTeams[$teamStat['team_id']] : [];
-                        $formatTeamStats[] = $teamStat;
+                        $newTeamStat['team_info'] = isset($formatTeams[$teamStat['team_id']]) ? $formatTeams[$teamStat['team_id']] : [];
+                        $newTeamStat['team_id'] = $teamStat['team_id'];
+                        $newTeamStat['points'] = sprintf('%.1f', $teamStat['points'] / $teamStat['matches']);
+                        $newTeamStat['points_against'] = sprintf('%.1f', $teamStat['points_against'] / $teamStat['matches']);
+                        $newTeamStat['offensive_rebounds'] = sprintf('%.1f', $teamStat['offensive_rebounds'] / $teamStat['matches']);
+                        $newTeamStat['defensive_rebounds'] = sprintf('%.1f', $teamStat['defensive_rebounds'] / $teamStat['matches']);
+                        $newTeamStat['assists'] = sprintf('%.1f', $teamStat['assists'] / $teamStat['matches']);
+                        $newTeamStat['steals'] = sprintf('%.1f', $teamStat['steals'] / $teamStat['matches']);
+                        $newTeamStat['blocks'] = sprintf('%.1f', $teamStat['blocks'] / $teamStat['matches']);
+                        $newTeamStat['blocks'] = sprintf('%.1f', $teamStat['blocks'] / $teamStat['matches']);
+                        $newTeamStat['total_fouls'] = sprintf('%.1f', $teamStat['total_fouls'] / $teamStat['matches']);
+                        $newTeamStat['field_goals_accuracy'] = $teamStat['field_goals_accuracy'];
+                        $newTeamStat['field_goals_total'] = sprintf('%.1f', $teamStat['field_goals_total'] / $teamStat['matches']);
+                        $newTeamStat['field_goals_scored'] = sprintf('%.1f', $teamStat['field_goals_scored'] / $teamStat['matches']);
+                        $newTeamStat['three_pointers_accuracy'] = $teamStat['three_pointers_accuracy'];
+                        $newTeamStat['three_pointers_total'] = sprintf('%.1f', $teamStat['three_pointers_total'] / $teamStat['matches']);
+                        $newTeamStat['three_pointers_scored'] = sprintf('%.1f', $teamStat['three_pointers_scored'] / $teamStat['matches']);
+                        $newTeamStat['free_throws_total'] = sprintf('%.1f', $teamStat['free_throws_total'] / $teamStat['matches']);
+                        $newTeamStat['free_throws_accuracy'] = $teamStat['free_throws_accuracy'];
+                        $formatTeamStats[] = $newTeamStat;
                     }
                     if (!$formatTeamStats) return $this->writeJson(Status::CODE_OK, Status::$msg[Status::CODE_OK], []);
 
@@ -1639,7 +1657,7 @@ class BasketballApi extends FrontUserController
                         }
                         //失分
                         if (isset($points_against_table[$i])) {
-                            $formatTable['points_against'][] = ['team_info' => $formatTeams[$points_against_table[$i]['team_id']], 'offensive_rebounds' => $points_against_table[$i]['points_against']];
+                            $formatTable['points_against'][] = ['team_info' => $formatTeams[$points_against_table[$i]['team_id']], 'points_against' => $points_against_table[$i]['points_against']];
                         }
                         //进攻篮板
                         if (isset($offensive_rebounds_table[$i])) {
