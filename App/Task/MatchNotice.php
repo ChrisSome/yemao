@@ -45,8 +45,12 @@ class MatchNotice  implements TaskInterface
         // TODO: Implement run() method.
         $type = $this->taskData['type'];
         $match_id = $this->taskData['match_id'];
-        $match = AdminMatch::getInstance()->where('match_id', $match_id)->get();
+        if (!$match = AdminMatch::getInstance()->where('match_id', $match_id)->get()) return;
         $score = $this->taskData['score'];
+        $match->status_id = $score[1];
+        $match->home_scores = $score[2];
+        $match->away_scores = $score[3];
+        $match->update();
         if ($type == 1) { //进球(包含点球)
             $last_incident_goal = $this->taskData['last_incident'];
             list($home, $away) = AppFunc::getFinalScore($score[2], $score[3]);
@@ -54,7 +58,7 @@ class MatchNotice  implements TaskInterface
             $position = $last_incident_goal['position'];
             if (!$home && !$away) return;
             $this->userNotice($type, $match_id, $home, $away, $position, $time);
-            $this->userPush($type, $match_id, $home, $away, $position, $time);
+            $this->userPush($type, $match_id, $home, $away, $position, $time, $match);
         } else if ($type == 3) { //黄牌  只下方提示
             $last_incident = $this->taskData['last_incident'];
             list($home, $away) = AppFunc::getYellowCard($score[2], $score[3]);
@@ -71,7 +75,6 @@ class MatchNotice  implements TaskInterface
             $this->userNotice($type, $match_id, $home, $away, $position, $time);
 
         } else if ($type == 10) { //比赛正式开始
-
             $this->userNotice($type, $match_id, 0, 0, 0, 0);
         } else if ($type == 12) { //结束通知
             //比赛可能出现0-0的情况，所以不能用last_incident_goal处理
@@ -101,14 +104,11 @@ class MatchNotice  implements TaskInterface
                 if ($matchTlive->is_stop == 1) return;
                 AdminMatchTlive::create()->update($data, ['match_id' => $match_id]);
             }
-
-
-
             if (!AppFunc::isInHotCompetition($match->competition_id)) return;
             list($home, $away) = AppFunc::getFinalScore($item['score'][2], $item['score'][3]);
             $time = AppFunc::getPlayingTime($match_id);
             $this->userNotice($type, $match_id, $home, $away, 0, $time);
-            $this->userPush($type, $match_id, $home, $away, $match->competition_id);
+            $this->userPush($type, $match_id, $home, $away, $match->competition_id, $match);
 
         } else {
             return;
@@ -192,11 +192,8 @@ class MatchNotice  implements TaskInterface
      * @param int $time
      * @throws \Exception
      */
-    public  function  userPush($type, $match_id, $home, $away, $position = 0, $time = 0)
+    public  function  userPush($type, $match_id, $home, $away, $position = 0, $time = 0, $match = null)
     {
-        if (!$match = AdminMatch::getInstance()->where('match_id', $match_id)->get()) {
-            return ;
-        }
         $user_ids = AppFunc::getUsersInterestMatch($match_id);
         $home_name_zh = $match->homeTeamName()->name_zh;
         $away_name_zh = $match->awayTeamName()->name_zh;
