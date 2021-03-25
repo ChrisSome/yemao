@@ -1467,7 +1467,7 @@ class BasketballApi extends FrontUserController
 
                     //point-得分榜 rebounds篮板榜 assists助攻榜 steals抢断榜 blocks盖帽榜 personal_fouls犯规帮 field_goals_accuracy投篮命中率
                     //two_points_total两分球总数   three_points_total 三分球总数 free_throws_total罚球总数 turnovers失误  court上场场次 matches比赛场次
-                    for ($i = 0; $i <= 100; $i++) {
+                    for ($i = 0; $i <= 150; $i++) {
                         if (isset($point_table[$i])) {
                             $formatTable['point'][] = ['player_info' => $point_table[$i]['player_info'], 'team_info' => $point_table[$i]['team_info'], 'point_per_court' => $point_table[$i]['point_per_match']];
                         }
