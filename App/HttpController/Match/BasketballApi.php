@@ -1383,6 +1383,7 @@ class BasketballApi extends FrontUserController
                         if ($playerStat['scope'] != 5 || !$playerStat['court']) continue;
                         if (in_array($playerStat['player_id'], $existPlayerIds)) continue;
                         $newPlayerStat['point_per_match'] = sprintf('%.1f', $playerStat['point'] / $playerStat['court']);
+                        $newPlayerStat['field_goals_scored'] = $playerStat['field_goals_scored'];
                         $newPlayerStat['rebounds_per_match'] = sprintf('%.1f', $playerStat['rebounds'] / $playerStat['court']);
                         $newPlayerStat['assists_per_match'] = sprintf('%.1f', $playerStat['assists'] / $playerStat['court']);
                         $newPlayerStat['steals_per_match'] = sprintf('%.1f', $playerStat['steals'] / $playerStat['court']);
@@ -1489,9 +1490,6 @@ class BasketballApi extends FrontUserController
                             $formatTable['personal_fouls'][] = ['player_info' => $personal_fouls_table[$i]['player_info'], 'team_info' => $personal_fouls_table[$i]['team_info'], 'personal_fouls_per_court' => $personal_fouls_table[$i]['personal_fouls_per_match']];
                         }
 
-                        if (isset($field_goals_accuracy_table[$i])) {
-                            $formatTable['field_goals_accuracy'][] = ['player_info' => $field_goals_accuracy_table[$i]['player_info'], 'team_info' => $field_goals_accuracy_table[$i]['team_info'], 'field_goals_accuracy' => $field_goals_accuracy_table[$i]['field_goals_accuracy'] . '%'];
-                        }
 
                         if (isset($two_points_total_table[$i])) {
                             $formatTable['two_points_total'][] = ['player_info' => $two_points_total_table[$i]['player_info'], 'team_info' => $two_points_total_table[$i]['team_info'], 'two_points_total_per_court' => $two_points_total_table[$i]['two_points_total_per_match']];
@@ -1512,6 +1510,12 @@ class BasketballApi extends FrontUserController
                         //上场场次
                         if (isset($court_table[$i])) {
                             $formatTable['court'][] = ['player_info' => $court_table[$i]['player_info'], 'team_info' => $court_table[$i]['team_info'], 'court' => $court_table[$i]['court']];
+                        }
+                        //投篮命中率 投篮命中数必须  > 300
+                        if (!isset($field_goals_accuracy_table[$i])) break;
+                        if ($field_goals_accuracy_table[$i]['field_goals_scored'] < 300) continue;
+                        if (isset($field_goals_accuracy_table[$i])) {
+                            $formatTable['field_goals_accuracy'][] = ['player_info' => $field_goals_accuracy_table[$i]['player_info'], 'team_info' => $field_goals_accuracy_table[$i]['team_info'], 'field_goals_accuracy' => $field_goals_accuracy_table[$i]['field_goals_accuracy'] . '%'];
                         }
 
 
