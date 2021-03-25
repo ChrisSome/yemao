@@ -1691,7 +1691,7 @@ class BasketballApi extends FrontUserController
 
                         //投篮命中率
                         if (isset($field_goals_accuracy_table[$i])) {
-                            $formatTable['field_goals_accuracy'][] = ['team_info' => $formatTeams[$field_goals_accuracy_table[$i]['team_id']], 'blocks' => $field_goals_accuracy_table[$i]['blocks']];
+                            $formatTable['field_goals_accuracy'][] = ['team_info' => $formatTeams[$field_goals_accuracy_table[$i]['team_id']], 'field_goals_accuracy' => $field_goals_accuracy_table[$i]['field_goals_accuracy']];
                         }
 
                         //投篮总数
