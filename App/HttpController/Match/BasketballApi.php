@@ -1378,8 +1378,10 @@ class BasketballApi extends FrontUserController
                     });
 
                     $formatPlayerStats = [];
+                    $existPlayerIds = [];
                     foreach ($playerStats as $k => $playerStat) {
                         if ($playerStat['scope'] != 5 || !$playerStat['court']) continue;
+                        if (in_array($playerStat['player_id'], $existPlayerIds)) continue;
                         $newPlayerStat['point_per_match'] = sprintf('%.1f', $playerStat['point'] / $playerStat['court']);
                         $newPlayerStat['rebounds_per_match'] = sprintf('%.1f', $playerStat['rebounds'] / $playerStat['court']);
                         $newPlayerStat['assists_per_match'] = sprintf('%.1f', $playerStat['assists'] / $playerStat['court']);
@@ -1395,6 +1397,7 @@ class BasketballApi extends FrontUserController
                         $newPlayerStat['court'] = $playerStat['court'];
                         $newPlayerStat['player_info'] = isset($formatUsers[$playerStat['player_id']]) ? $formatUsers[$playerStat['player_id']] : [];
                         $newPlayerStat['team_info'] = isset($formatTeams[$playerStat['team_id']]) ? $formatTeams[$playerStat['team_id']] : [];
+                        array_push($existPlayerIds, $playerStat['player_id']);
                         $formatPlayerStats[] = $newPlayerStat;
                     }
 
