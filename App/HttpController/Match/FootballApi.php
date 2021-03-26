@@ -1364,4 +1364,18 @@ class FootballApi extends FrontUserController
 
     }
 
+    /**
+     * 获取直播间在线人数
+     */
+    public function getUserCountInMatch()
+    {
+        if (empty($this->params['match_id']) || empty($this->params['type'])) {
+            return $this->writeJson(Status::CODE_W_PARAM, Status::$msg[Status::CODE_W_PARAM]);
+        }
+        $users = AppFunc::getUsersInRoom((int)$this->params['match_id'], (int)$this->params['type']);
+        $count = $users ? count($users) : 0;
+        return $this->writeJson(Status::CODE_OK, Status::$msg[Status::CODE_OK], $count);
+
+    }
+
 }

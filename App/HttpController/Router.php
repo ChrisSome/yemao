@@ -201,6 +201,7 @@ class Router extends AbstractRouter
             $r->addRoute(['GET'], '/footBall/noticeInMatch', '/Match/FootballApi/noticeInMatch');   //直播间公告
             $r->addRoute(['GET'], '/footBall/matchInfo', '/Match/FootballApi/getMatchInfo');   //比赛信息
             $r->addRoute(['GET'], '/footBall/getTodayAllMatch', '/Match/FootballApi/getTodayAllMatch');   //今天所有比赛
+            $r->addRoute(['GET'], '/footBall/getUserCountInMatch', '/Match/FootballApi/getUserCountInMatch');   //获取比赛直播间在线人数，供后台使用
             //篮球相关
             $r->addRoute(['GET'], '/basketball/basketballMatchPlaying', '/Match/BasketballApi/basketballMatchPlaying');   //今天所有比赛
             $r->addRoute(['GET'], '/basketball/basketballMatchSchedule', '/Match/BasketballApi/basketballMatchSchedule');   //赛程
