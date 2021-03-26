@@ -87,6 +87,7 @@ class MatchNotice  implements TaskInterface
                 'match_id' => $item['id'],
                 'is_stop' => 1
             ];
+            AppFunc::delMatchingInfo($item['id']);
             if (!$matchTlive = AdminMatchTlive::create()->where('match_id', $match_id)->get()) {
                 $match_res = Tool::getInstance()->postApi(sprintf($this->trend_detail, 'mark9527', 'dbfe8d40baa7374d54596ea513d8da96', $item['id']));
                 $match_trend = json_decode($match_res, true);

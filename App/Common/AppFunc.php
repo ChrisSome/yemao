@@ -782,7 +782,7 @@ class AppFunc
         RedisPool::invoke('redis', function(Redis $redis) use ($type, $match_id, &$fd_arr) {
             $fd_arr = $redis->sMembers(sprintf(($type == 1) ? self::USERS_IN_ROOM : self::USER_IN_BASKETBALL_ROOM, $match_id));
         });
-        return $fd_arr;
+        return $fd_arr ? $fd_arr : [];
     }
 
     //用户进入房间
@@ -861,6 +861,13 @@ class AppFunc
             $matching_info = $redis->get(sprintf(self::MATCHING_INFO, $match_id));
         });
         return $matching_info;
+    }
+
+    public static function delMatchingInfo($match_id) {
+        RedisPool::invoke('redis', function(Redis $redis) use ($match_id, &$bool) {
+            $bool = $redis->del(sprintf(self::MATCHING_INFO, $match_id));
+        });
+        return $bool;
     }
 
 

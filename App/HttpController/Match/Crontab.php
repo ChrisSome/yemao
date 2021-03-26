@@ -1319,6 +1319,7 @@ class Crontab extends FrontUserController
                         Cache::set('exception-match', json_encode($cacheExceptionMatchIds), 60 * 60);
                         $match->status_id = $status;
                         $match->update();
+                        AppFunc::delMatchingInfo($matchId);
                     }
                     continue;
                 }
@@ -1422,6 +1423,7 @@ class Crontab extends FrontUserController
                 $signal_match_info['time'] = AppFunc::getPlayingTime($item['id']);
                 $signal_match_info['status_id'] = $status;
                 $signal_match_info['match_stats'] = $matchStats;
+                $signal_match_info['user_num'] = count(AppFunc::getUsersInRoom($matchId, 1));
                 $signal_match_info['score'] = [
                     'home' => $item['score'][2],
                     'away' => $item['score'][3]
