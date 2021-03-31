@@ -31,7 +31,7 @@ class PhoneTask implements TaskInterface
                 'mobile' => $this->taskData['mobile'],
                 'code' => $this->taskData['code']
             ];
-            AdminUserPhonecode::getInstance()->insert($data);
+            AdminUserPhonecode::create($data)->save();
             Log::getInstance()->info('用户' . $this->taskData['mobile'] . '短信发送成功 ：' . $this->taskData['code']);
         } else {
             Log::getInstance()->info('验证码发送失败-' . json_encode($xsend));

@@ -30,12 +30,12 @@ class SerialPointTask implements TaskInterface
     function run(int $taskId,int $workerIndex)
     {
         if ($this->taskData['task_id'] == 1) {
-            if (AdminUserSerialPoint::getInstance()->where('user_id', $this->taskData['user_id'])->where('task_id', 1)->where('created_at', date('Y-m-d'))->get()) {
+            if (AdminUserSerialPoint::create()->where('user_id', $this->taskData['user_id'])->where('task_id', 1)->where('created_at', date('Y-m-d'))->get()) {
                 return;
             }
         } else {
             //任务次数限制
-            $done_times = AdminUserSerialPoint::getInstance()->where('user_id', $this->taskData['user_id'])
+            $done_times = AdminUserSerialPoint::create()->where('user_id', $this->taskData['user_id'])
                 ->where('task_id', $this->taskData['task_id'])->where('created_at', date('Y-m-d'))->count();
             if (isset(AdminUserSerialPoint::USER_TASK[$this->taskData['task_id']]['times_per_day'])) {
                 $task_times = AdminUserSerialPoint::USER_TASK[$this->taskData['task_id']]['times_per_day'];
@@ -58,8 +58,8 @@ class SerialPointTask implements TaskInterface
             'point' => $user_task['points_per_time']
 
         ];
-        AdminUserSerialPoint::getInstance()->insert($data);
-        $user = AdminUser::getInstance()->find($this->taskData['user_id']);
+        AdminUserSerialPoint::create($data)->save();
+        $user = AdminUser::create()->where('id', $this->taskData['user_id'])->get();
         $point = (int)$user->point + (int)$user_task['points_per_time'];
         $user->point = $point;
         $level = AppFunc::getUserLvByPoint($point);

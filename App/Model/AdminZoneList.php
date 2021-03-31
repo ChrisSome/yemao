@@ -2,9 +2,9 @@
 
 namespace App\Model;
 
-use App\Base\BaseModel;
+use EasySwoole\ORM\AbstractModel;
 
-class AdminZoneList extends BaseModel
+class AdminZoneList extends AbstractModel
 {
     protected $tableName = "admin_zone_list";
 

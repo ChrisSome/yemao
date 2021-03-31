@@ -1,9 +1,9 @@
 <?php
 
 namespace App\Model;
-use App\Base\BaseModel;
+use EasySwoole\ORM\AbstractModel;
 
-class AdminPlayer  extends BaseModel
+class AdminPlayer  extends AbstractModel
 {
     protected $tableName = "admin_player_list";
 

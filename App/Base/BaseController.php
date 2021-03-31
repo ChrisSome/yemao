@@ -15,17 +15,7 @@ abstract class BaseController extends Controller
         $this->actionNotFound('index');
     }
 
-    public function render(string $template, array $data = [])
-    {
-        $isDebug = Config::getInstance()->getConf('DEBUG');
-        $data = array_merge($data, ['debug' => $isDebug]);
-        $this->response()->write(Render::getInstance()->render($template, $data));
-    }
 
-    public function show404()
-    {
-        $this->render('default.404');
-    }
 
     public function writeJson($statusCode = 200, $msg = null, $data = null)
     {

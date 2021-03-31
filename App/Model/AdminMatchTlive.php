@@ -1,9 +1,9 @@
 <?php
 
 namespace App\Model;
-use App\Base\BaseModel;
+use EasySwoole\ORM\AbstractModel;
 
-class AdminMatchTlive  extends BaseModel
+class AdminMatchTlive  extends AbstractModel
 {
     protected $tableName = "admin_match_tlive";
 

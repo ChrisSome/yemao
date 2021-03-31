@@ -2,12 +2,10 @@
 
 namespace App\Model;
 
-use App\Base\BaseModel;
-use App\lib\Tool;
 use EasySwoole\Mysqli\QueryBuilder;
-use App\Utility\Log\Log;
+use EasySwoole\ORM\AbstractModel;
 
-class AdminUserPost extends BaseModel
+class AdminUserPost extends AbstractModel
 {
     protected $tableName = "admin_user_posts";
     const STATUS_DEL        = 2;        //删除

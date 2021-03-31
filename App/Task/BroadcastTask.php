@@ -71,7 +71,7 @@ class BroadcastTask implements TaskInterface
         $atUser = [];
         if ($atUserId = $aMessage['atUserId']) {
             $atUser = DbManager::getInstance()->invoke(function ($client) use ($atUserId) {
-                $userModel = AdminUser::invoke($client)->field(['nickname', 'level', 'id'])->find($atUserId);
+                $userModel = AdminUser::invoke($client)->field(['nickname', 'level', 'id'])->where('id', $atUserId)->get();
                 return $userModel;
             });
         }

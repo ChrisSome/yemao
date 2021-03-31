@@ -2,9 +2,9 @@
 
 namespace App\Model;
 
-use App\Base\BaseModel;
+use EasySwoole\ORM\AbstractModel;
 
-class AdminUserSetting extends BaseModel
+class AdminUserSetting extends AbstractModel
 {
 
     const STATUS_NORMAL = 1;

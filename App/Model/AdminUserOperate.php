@@ -2,9 +2,9 @@
 
 namespace App\Model;
 
-use App\Base\BaseModel;
+use EasySwoole\ORM\AbstractModel;
 
-class AdminUserOperate extends BaseModel
+class AdminUserOperate extends AbstractModel
 {
 
     const TYPE_BOOK_MARK = 2;//收藏

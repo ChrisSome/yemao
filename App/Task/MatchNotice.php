@@ -45,7 +45,7 @@ class MatchNotice  implements TaskInterface
         // TODO: Implement run() method.
         $type = $this->taskData['type'];
         $match_id = $this->taskData['match_id'];
-        if (!$match = AdminMatch::getInstance()->where('match_id', $match_id)->get()) return;
+        if (!$match = AdminMatch::create()->where('match_id', $match_id)->get()) return;
         $score = $this->taskData['score'];
         $match->status_id = $score[1];
         $match->home_scores = json_encode($score[2]);
@@ -98,7 +98,7 @@ class MatchNotice  implements TaskInterface
                 }
                 $data['match_trend'] = json_encode($match_trend_info);
 
-                AdminMatchTlive::getInstance()->insert($data);
+                AdminMatchTlive::create($data)->save();
 
             } else {
                 unset($data['match_id']);
@@ -157,7 +157,7 @@ class MatchNotice  implements TaskInterface
                 if (!$user['user_id']) { //未登录
                     $is_interest = false;
                 } else {
-                    if (!$interest = AdminInterestMatches::getInstance()->where('uid', $user['user_id'])->where('type', AdminInterestMatches::FOOTBALL_TYPE)->get()) {
+                    if (!$interest = AdminInterestMatches::create()->where('uid', $user['user_id'])->where('type', AdminInterestMatches::FOOTBALL_TYPE)->get()) {
                         $is_interest = false;
                     } else {
                         if (in_array($match_id, json_decode($interest->match_ids))) {
@@ -200,7 +200,7 @@ class MatchNotice  implements TaskInterface
         $away_name_zh = $match->awayTeamName()->name_zh;
         $competition_name_zh = $match->competitionName()->short_name_zh;
         if (!$user_ids) return;
-        $users = AdminUser::getInstance()->where('id', $user_ids, 'in')->all();
+        $users = AdminUser::create()->where('id', $user_ids, 'in')->all();
         $prepare_cid_arr = [];
         $uids = [];
         if ($type == 12) {//比赛结束
@@ -224,7 +224,7 @@ class MatchNotice  implements TaskInterface
                 'title' => $title,
                 'content' => $content
             ];
-            $rs = AdminNoticeMatch::getInstance()->insert($insertData);
+            $rs = AdminNoticeMatch::create($insertData)->save();
             $pushInfo['title'] = $title;
             $pushInfo['content'] = $content;
             $pushInfo['payload'] = ['item_id' => $match_id, 'item_type' => 1];
@@ -261,7 +261,7 @@ class MatchNotice  implements TaskInterface
                 'title' => $title,
                 'content' => $content
             ];
-            $rs = AdminNoticeMatch::getInstance()->insert($insertData);
+            $rs = AdminNoticeMatch::create($insertData)->save();
             $pushInfo['title'] = $title;
             $pushInfo['content'] = $content;
             $pushInfo['payload'] = ['item_id' => $match_id, 'item_type' => 1];

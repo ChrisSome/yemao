@@ -1,8 +1,9 @@
 <?php
 namespace App\Model;
 
-use App\Base\BaseModel;
-class AdminStageList extends BaseModel
+use EasySwoole\ORM\AbstractModel;
+
+class AdminStageList extends AbstractModel
 {
     protected $tableName = "admin_stage_list";
 

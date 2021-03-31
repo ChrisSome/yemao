@@ -20,7 +20,6 @@ use App\Task\SerialPointTask;
 use easySwoole\Cache\Cache;
 use EasySwoole\EasySwoole\Config;
 use EasySwoole\EasySwoole\Task\TaskManager;
-use EasySwoole\Http\Message\Status;
 use EasySwoole\Redis\Redis as Redis;
 use EasySwoole\RedisPool\RedisPool as RedisPool;
 use EasySwoole\Validate\Validate;
@@ -43,10 +42,6 @@ class Login extends FrontUserController
 
 
     const DEFAULT_PHOTO = 'http://live-broadcast-system.oss-cn-hongkong.aliyuncs.com/859c3661cbcc2902.jpg';
-    public function index()
-    {
-        return $this->render('front.user.login');
-    }
 
 
 
@@ -65,14 +60,14 @@ class Login extends FrontUserController
     {
         $params = $this->params;
         if (empty($params['type']) || empty($params['mobile'])) return $this->writeJson(Statuses::CODE_W_PARAM, Statuses::$msg[Statuses::CODE_W_PARAM]);
-        if (!$user = AdminUser::getInstance()->where('mobile', trim($params['mobile']))->get()) {
+        if (!$user = AdminUser::create()->where('mobile', trim($params['mobile']))->get()) {
             return $this->writeJson(Statuses::CODE_USER_NOT_EXIST, Statuses::$msg[Statuses::CODE_USER_NOT_EXIST]);
         }
         if (in_array($user->status, [AdminUser::STATUS_BAN, AdminUser::STATUS_CANCEL])) {
             return $this->writeJson(Statuses::CODE_WRONG_STATUS, Statuses::$msg[Statuses::CODE_WRONG_STATUS]);
         }
         if ($params['type'] == 1) { //验证码登陆
-            if (empty($params['code']) || !$mobile_code = AdminUserPhonecode::getInstance()->getLastCodeByMobile($this->params['mobile'])) {
+            if (empty($params['code']) || !$mobile_code = AdminUserPhonecode::create()->getLastCodeByMobile($this->params['mobile'])) {
                 return $this->writeJson(Statuses::CODE_W_PHONE_CODE, Statuses::$msg[Statuses::CODE_W_PHONE_CODE]);
             }
             if ($mobile_code['code'] != trim($params['code'])) {
@@ -221,7 +216,7 @@ class Login extends FrontUserController
         }
 
         //获取三方微信账户信息
-        $mThirdWxInfo = AdminUser::getInstance()->getWxUser($params['access_token'], $params['open_id']);
+        $mThirdWxInfo = AdminUser::create()->getWxUser($params['access_token'], $params['open_id']);
         $aWxInfo = json_decode($mThirdWxInfo, true);
         if (json_last_error()) {
             return $this->writeJson(Statuses::CODE_ERR, 'json parse error');
@@ -271,7 +266,7 @@ class Login extends FrontUserController
     {
         $params = $this->params;
         //获取三方微信账户信息
-        $mThirdWxInfo = AdminUser::getInstance()->getWxUser($params['access_token'], $params['open_id']);
+        $mThirdWxInfo = AdminUser::create()->getWxUser($params['access_token'], $params['open_id']);
         $aWxInfo = json_decode($mThirdWxInfo, true);
         if (json_last_error()) {
             return $this->writeJson(Statuses::CODE_ERR, 'json parse error');
@@ -284,7 +279,7 @@ class Login extends FrontUserController
                 'wx_name'  => $aWxInfo['nickname'],
                 'third_wx_unionid' => base64_encode($aWxInfo['unionid']),
             ];
-            if (!$user = AdminUser::getInstance()->where('third_wx_unionid', base64_encode($aWxInfo['unionid']))->get()) {
+            if (!$user = AdminUser::create()->where('third_wx_unionid', base64_encode($aWxInfo['unionid']))->get()) {
                 return $this->writeJson(Statuses::CODE_UNBIND_WX, Statuses::$msg[Statuses::CODE_UNBIND_WX], $wxInfo);
             } else {
                 if ($cid = $this->params['cid']) {
@@ -355,19 +350,19 @@ class Login extends FrontUserController
         }
 
 
-        if ($sensitive = AdminSensitive::getInstance()->where('word', '%' . trim($this->params['nickname']) . '%', 'like')->get()) {
+        if ($sensitive = AdminSensitive::create()->where('word', '%' . trim($this->params['nickname']) . '%', 'like')->get()) {
             //敏感词
             return $this->writeJson(Statuses::CODE_ADD_POST_SENSITIVE, sprintf(Statuses::$msg[Statuses::CODE_ADD_POST_SENSITIVE], $sensitive->word));
         } else if (AppFunc::have_special_char($this->params['nickname'])) {
             //是否utf8编码
             return $this->writeJson(Statuses::CODE_UNVALID_CODE, Statuses::$msg[Statuses::CODE_UNVALID_CODE], $sensitive->word);
 
-        } else if (AdminUser::getInstance()->where('nickname', $this->params['nickname'])->get()) {
+        } else if (AdminUser::create()->where('nickname', $this->params['nickname'])->get()) {
             //是否重复
             return $this->writeJson(Statuses::CODE_USER_DATA_EXIST, Statuses::$msg[Statuses::CODE_USER_DATA_EXIST]);
 
         }
-        if (AdminUser::getInstance()->where('mobile', $this->params['mobile'])->get()) {
+        if (AdminUser::create()->where('mobile', $this->params['mobile'])->get()) {
             return $this->writeJson(Statuses::CODE_PHONE_EXIST, Statuses::$msg[Statuses::CODE_PHONE_EXIST]);
 
         }
@@ -400,7 +395,7 @@ class Login extends FrontUserController
                 'province_code' => !empty($provinceCode) ? $provinceCode : 0,
                 'device_type' => $this->params['device_type']
             ];
-            $rs = AdminUser::getInstance()->insert($userData);
+            $rs = AdminUser::create($userData)->save();
             $time = time();
             $token = md5($rs . Config::getInstance()->getConf('app.token') . $time);
             $sUserKey = sprintf(UserModel::USER_TOKEN_KEY, $token);
@@ -425,24 +420,24 @@ class Login extends FrontUserController
                     'basketball_notice' => json_encode($basketball_notice),
                     'basketball_push' => json_encode($basketball_push)
                 ];
-                AdminUserSetting::getInstance()->insert($settingData);
+                AdminUserSetting::create($settingData)->save();
                 //写用户关注赛事
-                if ($recCompetitionRes = AdminSysSettings::getInstance()->where('sys_key', 'array_competition')->get()) {
+                if ($recCompetitionRes = AdminSysSettings::create()->where('sys_key', 'array_competition')->get()) {
                     $userInterestComData = [
                         'competition_ids' => $recCompetitionRes->sys_value,
                         'user_id' => $rs,
                         'type' => 1
                     ];
-                    AdminUserInterestCompetition::getInstance()->insert($userInterestComData);
+                    AdminUserInterestCompetition::create($userInterestComData)->save();
                 }
                 //写篮球关注赛事
-                if ($defaultRes = AdminSysSettings::getInstance()->where('sys_key', AdminSysSettings::BASKETBALL_COMPETITION)->get()) {
+                if ($defaultRes = AdminSysSettings::create()->where('sys_key', AdminSysSettings::BASKETBALL_COMPETITION)->get()) {
                     $userInterestBasCom = [
                         'competition_ids' => $defaultRes->sys_value,
                         'user_id' => $rs,
                         'type' => 2
                     ];
-                    AdminUserInterestCompetition::getInstance()->insert($userInterestBasCom);
+                    AdminUserInterestCompetition::create($userInterestBasCom)->save();
 
                 }
 
@@ -452,7 +447,7 @@ class Login extends FrontUserController
             return $this->writeJson(Statuses::CODE_ERR, '用户不存在或密码错误');
 
         }
-        $user = AdminUser::getInstance()->where('id', $rs)->get();
+        $user = AdminUser::create()->where('id', $rs)->get();
         $userSetting = $user->userSetting();
         $formatUserSetting = [
             'notice' => isset($userSetting->notice) ? json_decode($userSetting->notice, true) : null,
@@ -497,7 +492,7 @@ class Login extends FrontUserController
             return $this->writeJson(Statuses::CODE_W_PARAM, Statuses::$msg[Statuses::CODE_W_PARAM]);
 
         } else {
-            $phoneCode = AdminUserPhonecode::getInstance()->getLastCodeByMobile($this->params['mobile']);
+            $phoneCode = AdminUserPhonecode::create()->getLastCodeByMobile($this->params['mobile']);
             if (!$phoneCode || $phoneCode->status != 0 || $phoneCode->code != $this->params['code']) {
                 return $this->writeJson(Statuses::CODE_W_PHONE_CODE, Statuses::$msg[Statuses::CODE_W_PHONE_CODE]);
             }
@@ -521,10 +516,10 @@ class Login extends FrontUserController
      */
     public function forgetPass()
     {
-        if (!$user = AdminUser::getInstance()->where('mobile', $this->params['mobile'])->get()) {
+        if (!$user = AdminUser::create()->where('mobile', $this->params['mobile'])->get()) {
             return $this->writeJson(Statuses::CODE_USER_NOT_EXIST, Statuses::$msg[Statuses::CODE_USER_NOT_EXIST]);
         }
-        $phoneCode = AdminUserPhonecode::getInstance()->getLastCodeByMobile($this->params['mobile']);
+        $phoneCode = AdminUserPhonecode::create()->getLastCodeByMobile($this->params['mobile']);
         if (!$phoneCode || $phoneCode->status != 0 || $phoneCode->code != $this->params['phone_code']) {
 
             return $this->writeJson(Statuses::CODE_W_PHONE_CODE, Statuses::$msg[Statuses::CODE_W_PHONE_CODE]);
@@ -553,7 +548,7 @@ class Login extends FrontUserController
             if (empty($this->params['nickname'])) {
                 return $this->writeJson(Statuses::CODE_W_PARAM, Statuses::$msg[Statuses::CODE_W_PARAM]);
             }
-            if (AdminUser::getInstance()->where('nickname', trim($this->params['nickname']))->get()) {
+            if (AdminUser::create()->where('nickname', trim($this->params['nickname']))->get()) {
                 $response = [
                     'code' => Statuses::CODE_RES_EXIST,
                     'msg' => Statuses::$msg[Statuses::CODE_RES_EXIST],
@@ -567,7 +562,7 @@ class Login extends FrontUserController
                 return $this->writeJson(Statuses::CODE_W_PARAM, Statuses::$msg[Statuses::CODE_W_PARAM]);
             }
 
-            if (AdminUser::getInstance()->where('mobile', trim($this->params['mobile']))->get()) {
+            if (AdminUser::create()->where('mobile', trim($this->params['mobile']))->get()) {
                 $response = [
                     'code' => Statuses::CODE_RES_EXIST,
                     'msg' => Statuses::$msg[Statuses::CODE_RES_EXIST],

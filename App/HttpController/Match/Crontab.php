@@ -39,8 +39,6 @@ use App\WebSocket\WebSocketStatus;
 use easySwoole\Cache\Cache;
 use EasySwoole\EasySwoole\ServerManager;
 use EasySwoole\EasySwoole\Task\TaskManager;
-use EasySwoole\Redis\Redis;
-use EasySwoole\RedisPool\Redis as RedisPool;
 
 /**
  *                             _ooOoo_
@@ -115,7 +113,7 @@ class Crontab extends FrontUserController
     function getTeamList()
     {
 
-        $time_stamp = AdminTeam::getInstance()->max('updated_at');
+        $time_stamp = AdminTeam::create()->max('updated_at');
         $url = sprintf($this->url . $this->uriTeamList, $this->user, $this->secret, $time_stamp + 1);
         $res = Tool::getInstance()->postApi($url);
         $teams = json_decode($res, true);
@@ -146,12 +144,12 @@ class Crontab extends FrontUserController
                 'national_players' => isset($team['national_players']) ? $team['national_players'] : 0,
                 'updated_at' => $team['updated_at'],
             ];
-            $exist = AdminTeam::getInstance()->where('team_id', $team['id'])->get();
+            $exist = AdminTeam::create()->where('team_id', $team['id'])->get();
             if ($exist) {
                 unset($data['team_id']);
-                AdminTeam::getInstance()->update($data, ['team_id' => $team['id']]);
+                AdminTeam::create()->update($data, ['team_id' => $team['id']]);
             } else {
-                AdminTeam::getInstance()->insert($data);
+                AdminTeam::create($data)->save();
 
             }
 
@@ -162,7 +160,7 @@ class Crontab extends FrontUserController
 
     public function updateChangingMatch()
     {
-        $time = AdminMatch::getInstance()->max('updated_at');
+        $time = AdminMatch::create()->max('updated_at');
         $url = sprintf($this->changingMatch, $this->user, $this->secret, $time);
 
         $res = Tool::getInstance()->postApi($url);
@@ -177,7 +175,7 @@ class Crontab extends FrontUserController
 
         foreach ($decodeDatas as $data) {
             //更新赛季比赛列表 （有新赛季或者新阶段的时候新增）
-            if ($signal_season_match = SeasonMatchList::getInstance()->where('match_id', $data['id'])->get()) {
+            if ($signal_season_match = SeasonMatchList::create()->where('match_id', $data['id'])->get()) {
                 $signal_season_match->home_scores = json_encode($data['home_scores']);
                 $signal_season_match->away_scores = json_encode($data['away_scores']);
                 $signal_season_match->home_position = $data['home_position'];
@@ -214,9 +212,9 @@ class Crontab extends FrontUserController
                     'status_id' => $data['status_id'],
                     'updated_at' => $data['updated_at'],
                 ];
-                SeasonMatchList::getInstance()->insert($insertData);
+                SeasonMatchList::create($insertData)->save();
             }
-            if ($signal = AdminMatch::getInstance()->where('match_id', $data['id'])->get()) {
+            if ($signal = AdminMatch::create()->where('match_id', $data['id'])->get()) {
                 if ($signal->status_id == 8) continue;
                 $signal->home_scores = json_encode($data['home_scores']);
                 $signal->away_scores = json_encode($data['away_scores']);
@@ -256,7 +254,7 @@ class Crontab extends FrontUserController
                     'updated_at' => $data['updated_at'],
                 ];
 
-                AdminMatch::getInstance()->insert($insertData);
+                AdminMatch::create($insertData)->save();
 
             }
 
@@ -274,7 +272,7 @@ class Crontab extends FrontUserController
     public function updateSeasonTeamPlayer()
     {
         //当前赛季
-        $seasons = AdminSeason::getInstance()->field(['season_id'])->where('is_current', 1)->where('has_player_stats', 1)->all();
+        $seasons = AdminSeason::create()->field(['season_id'])->where('is_current', 1)->where('has_player_stats', 1)->all();
         //昨天的比赛
         foreach ($seasons as $data) {
             if ($data['season_id']) {
@@ -285,7 +283,7 @@ class Crontab extends FrontUserController
                 $decode = json_decode($res, true);
                 $results = !empty($decode['results']) ? $decode['results'] : [];
                 if ($results) {
-                    if ($seasonTeamPlayerRes = SeasonTeamPlayer::getInstance()->where('season_id', $seasonId)->get()) {
+                    if ($seasonTeamPlayerRes = SeasonTeamPlayer::create()->where('season_id', $seasonId)->get()) {
                         $seasonTeamPlayerRes->upadted_at = $results['updated_at'];
                         $seasonTeamPlayerRes->players_stats = !empty($results['players_stats']) ? json_encode($results['players_stats']) : json_encode([]);
                         $seasonTeamPlayerRes->shooters = !empty($results['shooters']) ? json_encode($results['shooters']) : json_encode([]);
@@ -299,7 +297,7 @@ class Crontab extends FrontUserController
                             'teams_stats' => !empty($results['teams_stats']) ? json_encode($results['teams_stats']) : json_encode([]),
                             'season_id' => $seasonId
                         ];
-                        SeasonTeamPlayer::getInstance()->insert($insertDataOne);
+                        SeasonTeamPlayer::create($insertDataOne)->save();
                     }
                 }
 
@@ -310,7 +308,7 @@ class Crontab extends FrontUserController
                 $decode = json_decode($res, true);
                 $decodeTable = $decode['results'];
                 if (!empty($decode['results'])) {
-                    if ($seasonTable = SeasonAllTableDetail::getInstance()->where('season_id', $seasonId)->get()) {
+                    if ($seasonTable = SeasonAllTableDetail::create()->where('season_id', $seasonId)->get()) {
                         $seasonTable->promotions = !empty($decodeTable['promotions']) ? json_encode($decodeTable['promotions']) : '';
                         $seasonTable->tables = !empty($decodeTable['tables']) ? json_encode($decodeTable['tables']) : '';
                         $seasonTable->update();
@@ -320,7 +318,7 @@ class Crontab extends FrontUserController
                             'tables' => !empty($decodeTable['tables']) ? json_encode($decodeTable['tables']) : '',
                             'season_id' => $seasonId
                         ];
-                        SeasonAllTableDetail::getInstance()->insert($insertTable);
+                        SeasonAllTableDetail::create($insertTable)->save();
                     }
                 }
             }
@@ -348,7 +346,7 @@ class Crontab extends FrontUserController
             }
             foreach ($decodeDatas as $data) {
 
-                if ($signal = AdminMatch::getInstance()->where('match_id', $data['id'])->get()) {
+                if ($signal = AdminMatch::create()->where('match_id', $data['id'])->get()) {
                     $signal->home_scores = json_encode($data['home_scores']);
                     $signal->away_scores = json_encode($data['away_scores']);
                     $signal->home_position = $data['home_position'];
@@ -386,7 +384,7 @@ class Crontab extends FrontUserController
                         'updated_at' => $data['updated_at'],
                     ];
 
-                    AdminMatch::getInstance()->insert($insertData);
+                    AdminMatch::create($insertData)->save();
                 }
             }
         }
@@ -398,7 +396,7 @@ class Crontab extends FrontUserController
      */
     function getCompetitiones()
     {
-        $max_updated_at = AdminCompetition::getInstance()->max('updated_at');
+        $max_updated_at = AdminCompetition::create()->max('updated_at');
         $url = sprintf($this->url . $this->uriCompetition, $this->user, $this->secret, $max_updated_at + 1);
 
         $res = Tool::getInstance()->postApi($url);
@@ -432,12 +430,12 @@ class Crontab extends FrontUserController
                 'secondary_color' => isset($data['secondary_color']) ? $data['secondary_color'] : '',
                 'updated_at' => $data['updated_at'],
             ];
-            $exist = AdminCompetition::getInstance()->where('competition_id', $data['id'])->get();
+            $exist = AdminCompetition::create()->where('competition_id', $data['id'])->get();
             if ($exist) {
                 unset($insertData['competition_id']);
-                AdminCompetition::getInstance()->update($insertData, ['competition_id' => $data['id']]);
+                AdminCompetition::create()->update($insertData, ['competition_id' => $data['id']]);
             } else {
-                AdminCompetition::getInstance()->insert($insertData);
+                AdminCompetition::create($insertData)->save();
             }
         }
     }
@@ -467,10 +465,10 @@ class Crontab extends FrontUserController
                 'pc_link' => $item['pc_link'],
             ];
 
-            if (AdminSteam::getInstance()->where('match_id', $item['match_id'])->get()) {
-                AdminSteam::getInstance()->update($data, ['match_id' => $item['match_id']]);
+            if (AdminSteam::create()->where('match_id', $item['match_id'])->get()) {
+                AdminSteam::create()->update($data, ['match_id' => $item['match_id']]);
             } else {
-                AdminSteam::getInstance()->insert($data);
+                AdminSteam::create($data)->save();
 
             }
         }
@@ -484,7 +482,7 @@ class Crontab extends FrontUserController
      */
     public function getLineUp()
     {
-        $time = AdminTeamLineUp::getInstance()->max('updated_at');
+        $time = AdminTeamLineUp::create()->max('updated_at');
         $url = sprintf($this->url . $this->uriLineUp, $this->user, $this->secret, $time);
         $res = Tool::getInstance()->postApi($url);
         $resp = json_decode($res, true);
@@ -499,10 +497,10 @@ class Crontab extends FrontUserController
                 'squad' => json_encode($item['squad']),
                 'updated_at' => $item['updated_at'],
             ];
-            if (AdminTeamLineUp::getInstance()->where('team_id', $item['id'])->get()) {
-                AdminTeamLineUp::getInstance()->update($inert, ['team_id' => $item['id']]);
+            if (AdminTeamLineUp::create()->where('team_id', $item['id'])->get()) {
+                AdminTeamLineUp::create()->update($inert, ['team_id' => $item['id']]);
             } else {
-                AdminTeamLineUp::getInstance()->insert($inert);
+                AdminTeamLineUp::create($inert)->save();
             }
         }
 
@@ -517,7 +515,7 @@ class Crontab extends FrontUserController
      */
     public function players()
     {
-        $max_updated_at = AdminPlayer::getInstance()->max('updated_at');
+        $max_updated_at = AdminPlayer::create()->max('updated_at');
         $url = sprintf($this->url . $this->uriPlayer, $this->user, $this->secret, $max_updated_at + 1);
         $res = Tool::getInstance()->postApi($url);
         $resp = json_decode($res, true);
@@ -546,10 +544,10 @@ class Crontab extends FrontUserController
                         'preferred_foot' => $item['preferred_foot'],
                         'updated_at' => $item['updated_at'],
                     ];
-                    if (AdminPlayer::getInstance()->where('player_id', $item['id'])->get()) {
-                        AdminPlayer::getInstance()->update($inert, ['player_id' => $item['id']]);
+                    if (AdminPlayer::create()->where('player_id', $item['id'])->get()) {
+                        AdminPlayer::create()->update($inert, ['player_id' => $item['id']]);
                     } else {
-                        AdminPlayer::getInstance()->insert($inert);
+                        AdminPlayer::create($inert)->save();
 
                     }
                 }
@@ -567,7 +565,7 @@ class Crontab extends FrontUserController
      */
     public function clashHistory()
     {
-        $timestamp = AdminClashHistory::getInstance()->max('updated_at');
+        $timestamp = AdminClashHistory::create()->max('updated_at');
         $url = sprintf($this->url . $this->uriCompensation, $this->user, $this->secret, $timestamp + 1);
         $res = json_decode(Tool::getInstance()->postApi($url), true);
         if ($res['code'] == 0) {
@@ -583,10 +581,10 @@ class Crontab extends FrontUserController
                         'similar' => json_encode($item['similar']),
                         'updated_at' => $item['updated_at'],
                     ];
-                    if (AdminClashHistory::getInstance()->where('match_id', $item['id'])->get()) {
-                        AdminClashHistory::getInstance()->update($insert, ['match_id' => $item['id']]);
+                    if (AdminClashHistory::create()->where('match_id', $item['id'])->get()) {
+                        AdminClashHistory::create()->update($insert, ['match_id' => $item['id']]);
                     } else {
-                        AdminClashHistory::getInstance()->insert($insert);
+                        AdminClashHistory::create($insert)->save();
                     }
                 }
             }
@@ -606,19 +604,19 @@ class Crontab extends FrontUserController
      */
     public function noticeUserMatch()
     {
-        $matches = AdminMatch::getInstance()->where('match_time', time() + 60 * 15, '>')->where('match_time', time() + 60 * 16, '<=')->where('status_id', 1)->all();
+        $matches = AdminMatch::create()->where('match_time', time() + 60 * 15, '>')->where('match_time', time() + 60 * 16, '<=')->where('status_id', 1)->all();
         if ($matches) {
             foreach ($matches as $match) {
-                if (AdminNoticeMatch::getInstance()->where('match_id', $match->id)->where('is_notice', 1)->get()) {
+                if (AdminNoticeMatch::create()->where('match_id', $match->id)->where('is_notice', 1)->get()) {
                     continue;
                 }
                 if (!$prepareNoticeUserIds = AppFunc::getUsersInterestMatch($match->match_id)) {
                     continue;
                 } else {
-                    $users = AdminUser::getInstance()->where('id', $prepareNoticeUserIds, 'in')->field(['cid', 'id'])->all();
+                    $users = AdminUser::create()->where('id', $prepareNoticeUserIds, 'in')->field(['cid', 'id'])->all();
 
                     foreach ($users as $k => $user) {
-                        $userSetting = AdminUserSetting::getInstance()->where('user_id', $user['id'])->get();
+                        $userSetting = AdminUserSetting::create()->where('user_id', $user['id'])->get();
                         $startSetting = json_decode($userSetting->push, true)['start'];
                         if (!$userSetting || !$startSetting) {
                             unset($users[$k]);
@@ -642,8 +640,8 @@ class Crontab extends FrontUserController
                         'content' => $content,
                         'item_type' => 1
                     ];
-                    if (!$res = AdminNoticeMatch::getInstance()->where('match_id', $match->match_id)->where('type', 10)->get()) {
-                        $rs = AdminNoticeMatch::getInstance()->insert($insertData);
+                    if (!$res = AdminNoticeMatch::create()->where('match_id', $match->match_id)->where('type', 10)->get()) {
+                        $rs = AdminNoticeMatch::create($insertData)->save();
                         $info['rs'] = $rs;  //开赛通知
                         $pushInfo = [
                             'title' => $title,
@@ -678,7 +676,7 @@ class Crontab extends FrontUserController
             if ($dMatches) {
 
                 foreach ($dMatches as $dMatch) {
-                    if ($match = AdminMatch::getInstance()->where('match_id', $dMatch)->get()) {
+                    if ($match = AdminMatch::create()->where('match_id', $dMatch)->get()) {
                         $match->is_delete = 1;
                         $match->update();
                     }
@@ -723,7 +721,7 @@ class Crontab extends FrontUserController
                 $data['liveStatus'] = $datum['liveStatus'];
                 $data['status'] = $datum['status'];
 
-                if ($signal = AdminAlphaMatch::getInstance()->where('matchId', $datum['matchId'])->get()) {
+                if ($signal = AdminAlphaMatch::create()->where('matchId', $datum['matchId'])->get()) {
                     $signal->matchTime = $datum['matchTime'];
                     $signal->liveUrl2 = $datum['liveUrl2'];
                     $signal->liveUrl3 = $datum['liveUrl3'];
@@ -732,7 +730,7 @@ class Crontab extends FrontUserController
                     $signal->status = $datum['status'];
                     $signal->update();
                 } else {
-                    AdminAlphaMatch::getInstance()->insert($data);
+                    AdminAlphaMatch::create($data)->save();
                 }
 
             }
@@ -758,7 +756,7 @@ class Crontab extends FrontUserController
             return $this->writeJson(Status::CODE_OK, Status::$msg[Status::CODE_OK], 2);
 
         }
-        $match = AdminMatch::getInstance()->where('match_id', $match_id)->get();
+        $match = AdminMatch::create()->where('match_id', $match_id)->get();
         $statusId = $decodeDatas['score'][1];
         $match->home_scores = json_encode($decodeDatas['score'][2]);
         $match->away_scores = json_encode($decodeDatas['score'][3]);
@@ -781,8 +779,8 @@ class Crontab extends FrontUserController
             'match_trend' => json_encode($match_trend_info),
             'is_stop' => ($statusId == 8) ? 1 : 0
         ];
-        if (!$res = AdminMatchTlive::getInstance()->where('match_id', $match_id)->get()) {
-            AdminMatchTlive::getInstance()->insert($match_tlive_data);
+        if (!$res = AdminMatchTlive::create()->where('match_id', $match_id)->get()) {
+            AdminMatchTlive::create($match_tlive_data)->save();
         } else {
             unset($match_tlive_data['match_id']);
             AdminMatchTlive::create()->update($match_tlive_data, ['match_id' => $decodeDatas['id']]);
@@ -797,7 +795,7 @@ class Crontab extends FrontUserController
     public function updateSeason()
     {
 
-        $max_updated_at = AdminSeason::getInstance()->max('updated_at');
+        $max_updated_at = AdminSeason::create()->max('updated_at');
         $url = sprintf($this->season_url, $this->user, $this->secret, $max_updated_at + 1);
         $res = Tool::getInstance()->postApi($url);
         $resp = json_decode($res, true);
@@ -821,20 +819,19 @@ class Crontab extends FrontUserController
                         'has_table' => $item['has_table'],
                         'is_current' => $item['is_current'],
                     ];
-                    if (!$season = AdminSeason::getInstance()->where('season_id', $item['id'])->get()) {
+                    if (!$season = AdminSeason::create()->where('season_id', $item['id'])->get()) {
                         //插入心思安吉
-                        AdminSeason::getInstance()->insert($data);
+                        AdminSeason::create($data)->save();
                         //插入新赛季比赛
                         $res = Tool::getInstance()->postApi(sprintf('https://open.sportnanoapi.com/api/v4/football/match/season?user=%s&secret=%s&id=%s', 'mark9527', 'dbfe8d40baa7374d54596ea513d8da96', $item['id']));
                         $decode = json_decode($res, true);
                         $resultsMatch = !empty($decode['results']) ? $decode['results'] : [];
                         if ($resultsMatch) {
                             foreach ($resultsMatch as $data) {
-                                if (SeasonMatchList::getInstance()->get(['match_id' => $data['id']])) continue;
-                                $home_team = AdminTeam::getInstance()->where('team_id', $data['home_team_id'])->get();
-                                $away_team = AdminTeam::getInstance()->where('team_id', $data['away_team_id'])->get();
+                                if (SeasonMatchList::create()->get(['match_id' => $data['id']])) continue;
+                                $home_team = AdminTeam::create()->where('team_id', $data['home_team_id'])->get();
+                                $away_team = AdminTeam::create()->where('team_id', $data['away_team_id'])->get();
                                 if (!$home_team || !$away_team) continue;
-                                $competition = AdminCompetition::getInstance()->where('competition_id', $data['competition_id'])->get();
                                 $insertData = [
                                     'match_id' => $data['id'],
                                     'competition_id' => $data['competition_id'],
@@ -856,7 +853,7 @@ class Crontab extends FrontUserController
                                     'status_id' => $data['status_id'],
                                     'updated_at' => $data['updated_at'],
                                 ];
-                                SeasonMatchList::getInstance()->insert($insertData);
+                                SeasonMatchList::create($insertData)->save();
                             }
 
                         } else {
@@ -878,7 +875,7 @@ class Crontab extends FrontUserController
      */
     public function updatePlayerStat()
     {
-        $max = AdminPlayerStat::getInstance()->max('updated_at');
+        $max = AdminPlayerStat::create()->max('updated_at');
         $url = sprintf($this->player_stat, $this->user, $this->secret, $max+1);
         $res = Tool::getInstance()->postApi($url);
         $resp = json_decode($res, true);
@@ -914,11 +911,11 @@ class Crontab extends FrontUserController
                         'characteristics' => !isset($item['characteristics']) ? '' : json_encode($item['characteristics']),
                         'positions' => !isset($item['positions']) ? '' : json_encode($item['positions']),
                     ];
-                    if (!$player = AdminPlayerStat::getInstance()->where('player_id', $item['id'])->get()) {
+                    if (!$player = AdminPlayerStat::create()->where('player_id', $item['id'])->get()) {
 
-                        AdminPlayerStat::getInstance()->insert($data);
+                        AdminPlayerStat::create($data)->save();
                     } else {
-                        AdminPlayerStat::getInstance()->update($data, ['player_id' => $item['id']]);
+                        AdminPlayerStat::create()->update($data, ['player_id' => $item['id']]);
                     }
                 }
             }
@@ -935,7 +932,7 @@ class Crontab extends FrontUserController
      */
     public function playerChangeClubHistory()
     {
-        $max = AdminPlayerChangeClub::getInstance()->max('updated_at');
+        $max = AdminPlayerChangeClub::create()->max('updated_at');
         $url = sprintf($this->player_change_club_history, $this->user, $this->secret, $max+1);
         $res = Tool::getInstance()->postApi($url);
         $resp = json_decode($res, true);
@@ -959,8 +956,8 @@ class Crontab extends FrontUserController
                         'transfer_desc' => $item['transfer_desc'],
                         'updated_at' => $item['updated_at'],
                     ];
-                    if (!AdminPlayerChangeClub::getInstance()->where('id', $item['id'])->get()) {
-                        AdminPlayerChangeClub::getInstance()->insert($data);
+                    if (!AdminPlayerChangeClub::create()->where('id', $item['id'])->get()) {
+                        AdminPlayerChangeClub::create($data)->save();
                     } else {
                         //不可能有修改
                         continue;
@@ -982,7 +979,7 @@ class Crontab extends FrontUserController
      */
     public function teamHonor()
     {
-        $max = AdminTeamHonor::getInstance()->max('updated_at');
+        $max = AdminTeamHonor::create()->max('updated_at');
         $url = sprintf($this->team_honor, $this->user, $this->secret, $max + 1);
         $res = Tool::getInstance()->postApi($url);
         $resp = json_decode($res, true);
@@ -1000,12 +997,12 @@ class Crontab extends FrontUserController
                     'team' => json_encode($item['team']),
                     'update_at' => $item['updated_at']
                 ];
-                if (!AdminTeamHonor::getInstance()->where('team_id', $item['id'])->get()) {
-                    AdminTeamHonor::getInstance()->insert($data);
+                if (!AdminTeamHonor::create()->where('team_id', $item['id'])->get()) {
+                    AdminTeamHonor::create($data)->save();
                 } else {
                     $team_id = $data['team_id'];
                     unset($data['team_id']);
-                    AdminTeamHonor::getInstance()->update($data, ['team_id'=> $team_id]);
+                    AdminTeamHonor::create()->update($data, ['team_id'=> $team_id]);
                 }
             }
         } else {
@@ -1026,37 +1023,35 @@ class Crontab extends FrontUserController
     {
 
 
-        while (true){
-            $max = AdminHonorList::getInstance()->max('updated_at');
-            $url = sprintf($this->honor_list, $this->user, $this->secret, $max + 1);
-            $res = Tool::getInstance()->postApi($url);
-            $resp = json_decode($res, true);
+        $max = AdminHonorList::create()->max('updated_at');
+        $url = sprintf($this->honor_list, $this->user, $this->secret, $max + 1);
+        $res = Tool::getInstance()->postApi($url);
+        $resp = json_decode($res, true);
 
-            if ($resp['code'] == 0) {
-                if ($resp['query']['total'] == 0) {
-                    return $this->writeJson(Status::CODE_OK, Status::$msg[Status::CODE_OK]);
-
-                }
-                $decode = $resp['results'];
-                foreach ($decode as $item) {
-                    $data = [
-                        'id' => $item['id'],
-                        'title_zh' => $item['title_zh'],
-                        'logo' => $item['logo'],
-                        'updated_at' => $item['updated_at']
-                    ];
-                    if (!AdminHonorList::getInstance()->where('id', $item['id'])->get()) {
-                        AdminHonorList::getInstance()->insert($data);
-                    } else {
-                        $id = $data['id'];
-                        unset($data['id']);
-                        AdminHonorList::getInstance()->update($data, ['id' => $id]);
-                    }
-                }
-            } else {
+        if ($resp['code'] == 0) {
+            if ($resp['query']['total'] == 0) {
                 return $this->writeJson(Status::CODE_OK, Status::$msg[Status::CODE_OK]);
 
             }
+            $decode = $resp['results'];
+            foreach ($decode as $item) {
+                $data = [
+                    'id' => $item['id'],
+                    'title_zh' => $item['title_zh'],
+                    'logo' => $item['logo'],
+                    'updated_at' => $item['updated_at']
+                ];
+                if (!AdminHonorList::create()->where('id', $item['id'])->get()) {
+                    AdminHonorList::create($data)->save();
+                } else {
+                    $id = $data['id'];
+                    unset($data['id']);
+                    AdminHonorList::create()->update($data, ['id' => $id]);
+                }
+            }
+        } else {
+            return $this->writeJson(Status::CODE_OK, Status::$msg[Status::CODE_OK]);
+
         }
 
     }
@@ -1071,7 +1066,7 @@ class Crontab extends FrontUserController
     public function stageList()
     {
 
-        $max = AdminStageList::getInstance()->max('updated_at');
+        $max = AdminStageList::create()->max('updated_at');
         $url = sprintf($this->stage_list, $this->user, $this->secret, $max);
         $res = Tool::getInstance()->postApi($url);
         $resp = json_decode($res, true);
@@ -1090,8 +1085,8 @@ class Crontab extends FrontUserController
                     'order' => $item['order'],
                     'updated_at' => $item['updated_at'],
                 ];
-                if (!AdminStageList::getInstance()->where('stage_id', $item['id'])->get()) {
-                    AdminStageList::getInstance()->insert($data);
+                if (!AdminStageList::create()->where('stage_id', $item['id'])->get()) {
+                    AdminStageList::create($data)->save();
                     //新增阶段比赛
                     $select_season_id = $data['season_id'];
                     $res = Tool::getInstance()->postApi(sprintf('https://open.sportnanoapi.com/api/v4/football/match/season?user=%s&secret=%s&id=%s', 'mark9527', 'dbfe8d40baa7374d54596ea513d8da96', $select_season_id));
@@ -1099,7 +1094,7 @@ class Crontab extends FrontUserController
                     $resultsMatch = !empty($decode['results']) ? $decode['results'] : [];
                     if ($resultsMatch) {
                         foreach ($resultsMatch as $data) {
-                            if (SeasonMatchList::getInstance()->get(['match_id' => $data['id']])) continue;
+                            if (SeasonMatchList::create()->get(['match_id' => $data['id']])) continue;
                             $insertData = [
                                 'match_id' => $data['id'],
                                 'competition_id' => $data['competition_id'],
@@ -1121,7 +1116,7 @@ class Crontab extends FrontUserController
                                 'status_id' => $data['status_id'],
                                 'updated_at' => $data['updated_at'],
                             ];
-                            SeasonMatchList::getInstance()->insert($insertData);
+                            SeasonMatchList::create($insertData)->save();
                         }
 
                     } else {
@@ -1130,7 +1125,7 @@ class Crontab extends FrontUserController
 
                 } else {
 
-                    AdminStageList::getInstance()->update($data, ['stage_id'=>$item['id']]);
+                    AdminStageList::create()->update($data, ['stage_id'=>$item['id']]);
                 }
             }
         } else {
@@ -1144,7 +1139,7 @@ class Crontab extends FrontUserController
      */
     public function managerList()
     {
-        $manager_id = AdminManagerList::getInstance()->max('updated_at');
+        $manager_id = AdminManagerList::create()->max('updated_at');
         $url = sprintf($this->manager_list, $this->user, $this->secret, $manager_id);
         $res = Tool::getInstance()->postApi($url);
         $resp = json_decode($res, true);
@@ -1168,10 +1163,10 @@ class Crontab extends FrontUserController
                     'nationality' => $item['nationality'],
                     'updated_at' => $item['updated_at'],
                 ];
-                if (!AdminManagerList::getInstance()->where('manager_id', $item['id'])->get()) {
-                    AdminManagerList::getInstance()->insert($data);
+                if (!AdminManagerList::create()->where('manager_id', $item['id'])->get()) {
+                    AdminManagerList::create($data)->save();
                 } else {
-                    AdminManagerList::getInstance()->update($data, ['manager_id' => $item['id']]);
+                    AdminManagerList::create()->update($data, ['manager_id' => $item['id']]);
                 }
             }
         } else {
@@ -1190,7 +1185,7 @@ class Crontab extends FrontUserController
     public function playerHonorList()
     {
         while (true){
-            $max = AdminPlayerHonorList::getInstance()->max('updated_at');
+            $max = AdminPlayerHonorList::create()->max('updated_at');
 
             $url = sprintf($this->player_honor_list, $this->user, $this->secret, $max + 1);
             $res = Tool::getInstance()->postApi($url);
@@ -1212,11 +1207,11 @@ class Crontab extends FrontUserController
                         'honors' => json_encode($item['honors']),
                         'updated_at' => $item['updated_at'],
                     ];
-                    if (!AdminPlayerHonorList::getInstance()->where('player_id', $item['id'])->get()) {
-                        AdminPlayerHonorList::getInstance()->insert($data);
+                    if (!AdminPlayerHonorList::create()->where('player_id', $item['id'])->get()) {
+                        AdminPlayerHonorList::create($data)->save();
                     } else {
 
-                        AdminPlayerHonorList::getInstance()->update($data, ['player_id' => $item['id']]);
+                        AdminPlayerHonorList::create()->update($data, ['player_id' => $item['id']]);
                     }
                 }
             } else {
@@ -1236,7 +1231,7 @@ class Crontab extends FrontUserController
     {
 
         while (true){
-            $start_id = AdminCompetitionRuleList::getInstance()->max('updated_at');
+            $start_id = AdminCompetitionRuleList::create()->max('updated_at');
 
             $url = sprintf($this->competition_rule, $this->user, $this->secret, $start_id + 1);
             $res = Tool::getInstance()->postApi($url);
@@ -1257,11 +1252,11 @@ class Crontab extends FrontUserController
                         'text' => $item['text'],
                         'updated_at' => $item['updated_at'],
                     ];
-                    if (!AdminCompetitionRuleList::getInstance()->where('id', $item['id'])->get()) {
-                        AdminCompetitionRuleList::getInstance()->insert($data);
+                    if (!AdminCompetitionRuleList::create()->where('id', $item['id'])->get()) {
+                        AdminCompetitionRuleList::create($data)->save();
                     } else {
 
-                        AdminCompetitionRuleList::getInstance()->update($data, ['id' => $item['id']]);
+                        AdminCompetitionRuleList::create()->update($data, ['id' => $item['id']]);
                     }
                 }
             } else {
@@ -1295,12 +1290,12 @@ class Crontab extends FrontUserController
             foreach ($decode as $item) {
                 $matchId = $item['id'];
                 //无效比赛 跳过
-                if (!$match = AdminMatch::getInstance()->where('match_id', $matchId)->get()) {
+                if (!$match = AdminMatch::create()->where('match_id', $matchId)->get()) {
                     continue;
                 }
 
                 //比赛结束 跳过
-                $matchTliveRes = AdminMatchTlive::getInstance()->where('match_id', $matchId)->get();
+                $matchTliveRes = AdminMatchTlive::create()->where('match_id', $matchId)->get();
                 if (isset($matchTliveRes->is_stop) && $matchTliveRes->is_stop == 1) continue;
 
 
@@ -1496,7 +1491,7 @@ class Crontab extends FrontUserController
                         'match_id' => $playingMatch['match_id'],
                         'match_trend' => json_encode($match_trend_info)
                     ];
-                    AdminMatchTlive::create()->insert($insertData);
+                    AdminMatchTlive::create($insertData)->save();
                 }
             }
 
@@ -1536,7 +1531,7 @@ class Crontab extends FrontUserController
     public function getUserInSeasons()
     {
         //当前赛季有球员数据统计的赛季
-        $seasons = AdminSeason::getInstance()
+        $seasons = AdminSeason::create()
             ->where('has_player_stats', 1)->where('is_current', 1)->order('season_id', 'ASC')->all();
         if (!$seasons) {
             return $this->writeJson(Status::CODE_OK, Status::$msg[Status::CODE_OK], 1);
@@ -1544,12 +1539,12 @@ class Crontab extends FrontUserController
         foreach ($seasons as $season) {
             $selectSeasonId = $season->season_id;
             Cache::set('update-season-player-stats-seasonid', $selectSeasonId, 60 * 60);
-            $seasonPlayerStats = SeasonTeamPlayer::getInstance()->field(['season_id', 'players_stats'])->where('season_id', $selectSeasonId)->get();
+            $seasonPlayerStats = SeasonTeamPlayer::create()->field(['season_id', 'players_stats'])->where('season_id', $selectSeasonId)->get();
             if (!$seasonPlayerStats) continue;
             $playerStats = json_decode($seasonPlayerStats->players_stats, true);
             foreach ($playerStats as $playerStat) {
                 $playerId = $playerStat['player']['id'];
-                $playerSeason = AdminPlayer::getInstance()->where('player_id', $playerId)->get();
+                $playerSeason = AdminPlayer::create()->where('player_id', $playerId)->get();
                 if (!$playerSeason) continue;
                 $formatPlayerSeason = json_decode($playerSeason->seasons, true);
                 if (!$formatPlayerSeason) {
@@ -1575,7 +1570,7 @@ class Crontab extends FrontUserController
     public function getTeamsInSeasons()
     {
         //当前赛季有球员数据统计的赛季
-        $seasons = AdminSeason::getInstance()
+        $seasons = AdminSeason::create()
             ->where('has_team_stats', 1)->order('season_id', 'ASC')->where('season_id', 10088, '>')->limit(1000)->all();
         if (!$seasons) {
             return $this->writeJson(Status::CODE_OK, Status::$msg[Status::CODE_OK], 1);
@@ -1583,11 +1578,11 @@ class Crontab extends FrontUserController
         foreach ($seasons as $season) {
             $selectSeasonId = $season->season_id;
             Cache::set('update-season-team-stats-seasonid', $selectSeasonId, 60 * 60);
-            $seasonPlayerStats = SeasonTeamPlayer::getInstance()->field(['season_id', 'teams_stats'])->where('season_id', $selectSeasonId)->get();
+            $seasonPlayerStats = SeasonTeamPlayer::create()->field(['season_id', 'teams_stats'])->where('season_id', $selectSeasonId)->get();
             if (!$seasonPlayerStats || !$teamsStats = json_decode($seasonPlayerStats->teams_stats, true)) continue;
             foreach ($teamsStats as $playerStat) {
                 $playerId = $playerStat['team']['id'];
-                $team = AdminTeam::getInstance()->where('team_id', $playerId)->get();
+                $team = AdminTeam::create()->where('team_id', $playerId)->get();
                 if (!$team) continue;
                 $formatPlayerSeason = json_decode($team->seasons, true);
                 if (!$formatPlayerSeason) {

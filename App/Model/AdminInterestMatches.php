@@ -2,9 +2,9 @@
 
 namespace App\Model;
 
-use App\Base\BaseModel;
+use EasySwoole\ORM\AbstractModel;
 
-class AdminInterestMatches  extends BaseModel{
+class AdminInterestMatches  extends AbstractModel{
 
     const STATUS_NORMAL = 1;
     const FOOTBALL_TYPE = 1;

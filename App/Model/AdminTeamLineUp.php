@@ -1,9 +1,9 @@
 <?php
 namespace App\Model;
 
-use App\Base\BaseModel;
+use EasySwoole\ORM\AbstractModel;
 
-class AdminTeamLineUp  extends BaseModel
+class AdminTeamLineUp  extends AbstractModel
 {
     protected $tableName = "admin_line_up_list";
 }

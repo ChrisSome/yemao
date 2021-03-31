@@ -24,14 +24,6 @@ class WebSocket extends FrontUserController
     protected $user = 'mark9527';
     protected $secret = 'dbfe8d40baa7374d54596ea513d8da96';
 
-    public function index()
-    {
-        $this->render('front.websocket.index', [
-//            'server' => 'ws://192.168.254.103:9504'
-            'server' => 'ws://8.210.195.192:9504'
-        ]);
-    }
-
 
     function callback($instance, $channelName, $message) {
         $info = json_encode([$channelName, $message]);

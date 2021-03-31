@@ -2,10 +2,9 @@
 
 namespace App\Model;
 
-use App\Base\BaseModel;
-use App\lib\Tool;
+use EasySwoole\ORM\AbstractModel;
 
-class AdminUserPostsCategory extends BaseModel
+class AdminUserPostsCategory extends AbstractModel
 {
     protected $tableName = "admin_user_posts_category";
     const STATUS_NORMAL     = 1;        //用户发布成功/审核处理中

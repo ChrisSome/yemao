@@ -28,7 +28,6 @@ use App\Base\FrontUserController;
 use App\Common\AppFunc;
 use App\lib\FrontService;
 use App\lib\Tool;
-use App\Model\AdminClashHistory;
 use App\Model\AdminCompetition;
 use App\Model\AdminMatch;
 use App\Model\AdminMatchTlive;
@@ -39,7 +38,6 @@ use App\Model\SeasonAllTableDetail;
 use App\Model\SeasonMatchList;
 use App\Model\SignalMatchLineUp;
 use App\Storage\OnlineUser;
-use App\Utility\Log\Log;
 use App\Utility\Message\Status;
 use App\Model\AdminInterestMatches;
 use easySwoole\Cache\Cache;
@@ -92,12 +90,12 @@ class FootballApi extends FrontUserController
     public function getCompetition() :bool
     {
         $recommend = [];
-        if ($arr = AdminSysSettings::getInstance()->where('sys_key', AdminSysSettings::RECOMMEND_COM)->get()) {
+        if ($arr = AdminSysSettings::create()->where('sys_key', AdminSysSettings::RECOMMEND_COM)->get()) {
             $recommend = json_decode($arr->sys_value, true);
         }
         $uid = isset($this->auth['id']) ? $this->auth['id'] : 0;
         $user_interest = [];
-        if ($res = AdminUserInterestCompetition::getInstance()->where('user_id', $uid)->get()) {
+        if ($res = AdminUserInterestCompetition::create()->where('user_id', $uid)->get()) {
             $user_interest = json_decode($res['competition_ids'], true);
         }
         foreach ($recommend as $k => $items) {
@@ -195,7 +193,7 @@ class FootballApi extends FrontUserController
         }
         $start = strtotime($this->params['time']);
         $end = $start + 60 * 60 * 24;
-        $model = AdminMatch::getInstance()->where('status_id', self::STATUS_SCHEDULE, 'in')
+        $model = AdminMatch::create()->where('status_id', self::STATUS_SCHEDULE, 'in')
             ->where('match_time', $is_today ? time() : $start, '>=')->where('match_time', $end, '<')
             ->where('is_delete', 0)
             ->where('status_id', 1)
@@ -233,7 +231,7 @@ class FootballApi extends FrontUserController
         $size = isset($this->params['size']) ? (int)$this->params['size'] : 20;
         $start = strtotime($this->params['time']);
         $end = $start + 60 * 60 * 24;
-        $matches = AdminMatch::getInstance()
+        $matches = AdminMatch::create()
             ->where('match_time', $start, '>=')
             ->where('match_time', $end, '<')
             ->where('status_id', self::STATUS_RESULT, 'in')
@@ -303,12 +301,12 @@ class FootballApi extends FrontUserController
             return $this->writeJson(Status::CODE_VERIFY_ERR, '登陆令牌缺失或者已过期');
 
         }
-        $res = AdminInterestMatches::getInstance()->where('uid', $this->auth['id'])->where('type', AdminInterestMatches::FOOTBALL_TYPE)->get();
+        $res = AdminInterestMatches::create()->where('uid', $this->auth['id'])->where('type', AdminInterestMatches::FOOTBALL_TYPE)->get();
         if (!$res) return $this->writeJson(Status::CODE_OK, Status::$msg[Status::CODE_OK], []);
         $matchIds = json_decode($res->match_ids, true);
         if (!$matchIds) return $this->writeJson(Status::CODE_OK, Status::$msg[Status::CODE_OK], []);
 
-        $matches = AdminMatch::getInstance()->where('match_id', $matchIds, 'in')->order('match_time', 'DESC')->all();
+        $matches = AdminMatch::create()->where('match_id', $matchIds, 'in')->order('match_time', 'DESC')->all();
         $data = FrontService::formatMatchThree($matches, $this->auth['id'], $matchIds);
         $count = count($data);
         $response = ['list' => $data, 'count' => $count];
@@ -662,7 +660,7 @@ class FootballApi extends FrontUserController
 
         $homeFirstPlayers = $homeAlternatePlayers = $awayFirstPlayers = $awayAlternatePlayers = [];
 
-        if ($signalMatchLineUp = SignalMatchLineUp::getInstance()->where('match_id', $match_id)->get()) {
+        if ($signalMatchLineUp = SignalMatchLineUp::create()->where('match_id', $match_id)->get()) {
             $homeFormation = json_decode($signalMatchLineUp->home_formation, true);
             $awayFormation = json_decode($signalMatchLineUp->away_formation, true);
             $home = json_decode($signalMatchLineUp->home, true);
@@ -978,7 +976,7 @@ class FootballApi extends FrontUserController
         $matchId = (int)$this->params['match_id'];
 //        $sensus = AdminClashHistory::getInstance()->where('match_id', $this->params['match_id'])->get();
 
-        if (!$matchInfo = SeasonMatchList::getInstance()->where('match_id', $matchId)->where('is_delete', 0)->get()) {
+        if (!$matchInfo = SeasonMatchList::create()->where('match_id', $matchId)->where('is_delete', 0)->get()) {
             return $this->writeJson(Status::CODE_W_PARAM, Status::$msg[Status::CODE_W_PARAM]);
         }
 
@@ -991,7 +989,7 @@ class FootballApi extends FrontUserController
         if (!$currentSeasonId) {
             $intvalRank = ['homeIntvalRank' => null, 'awayIntvalRank' => null];
         } else {
-            $res = SeasonAllTableDetail::getInstance()->where('season_id', $currentSeasonId)->get();
+            $res = SeasonAllTableDetail::create()->where('season_id', $currentSeasonId)->get();
             $decode = isset($res->tables) ? json_decode($res->tables, true) : [];
             if ($decode) {
                 foreach ($decode as $item) {
@@ -1012,7 +1010,7 @@ class FootballApi extends FrontUserController
 
         //用户关注比赛
         $userId = !empty($this->auth['id']) ? (int)$this->auth['id'] : 0;
-        if ($userInterestMatch = AdminInterestMatches::getInstance()->where('uid', $userId)->where('type', 1)->get()) {
+        if ($userInterestMatch = AdminInterestMatches::create()->where('uid', $userId)->where('type', 1)->get()) {
             $userIntereMatchIds = json_decode($userInterestMatch->match_ids, true);
         } else {
             $userIntereMatchIds = [];
@@ -1020,7 +1018,7 @@ class FootballApi extends FrontUserController
 
         $homeTid = $matchInfo->home_team_id;
         $awayTid = $matchInfo->away_team_id;
-        $relateMatch = SeasonMatchList::getInstance()
+        $relateMatch = SeasonMatchList::create()
             ->where('(home_team_id='.$homeTid. ' or away_team_id='.$homeTid . ' or home_team_id='.$awayTid. ' or away_team_id='.$awayTid . ')')
             ->where('is_delete', 0)
             ->order('match_time', 'DESC')->limit(400)->all();
@@ -1075,7 +1073,7 @@ class FootballApi extends FrontUserController
      */
     public function noticeInMatch() :bool
     {
-        $setting = AdminSysSettings::getInstance()->where('sys_key', AdminSysSettings::SETTING_MATCH_NOTICEMENT)->get();
+        $setting = AdminSysSettings::create()->where('sys_key', AdminSysSettings::SETTING_MATCH_NOTICEMENT)->get();
 
         return $this->writeJson(Status::CODE_OK, Status::$msg[Status::CODE_OK], isset($setting->sys_value) ? $setting->sys_value : []);
 
@@ -1154,7 +1152,7 @@ class FootballApi extends FrontUserController
             return $this->writeJson(Status::CODE_OK, Status::$msg[Status::CODE_OK], []);
         }
         $status = array_merge(self::STATUS_PLAYING, self::STATUS_SCHEDULE);
-        $todayMatch = AdminMatch::getInstance()
+        $todayMatch = AdminMatch::create()
             ->where('match_time', $start, '>=')
             ->where('match_time', $end, '<')
             ->where('competition_id', $selectCompetitionIdArr, 'in')
@@ -1220,8 +1218,8 @@ class FootballApi extends FrontUserController
         if (!isset($this->params['match_id'])) {
             return $this->writeJson(Status::CODE_W_PARAM, Status::$msg[Status::CODE_W_PARAM]);
 
-        } else if ((!$match = SeasonMatchList::getInstance()->where('match_id', $this->params['match_id'])->get())
-            && (!$match = AdminMatch::getInstance()->where('match_id', $this->params['match_id'])->get())) {
+        } else if ((!$match = SeasonMatchList::create()->where('match_id', $this->params['match_id'])->get())
+            && (!$match = AdminMatch::create()->where('match_id', $this->params['match_id'])->get())) {
 
             return $this->writeJson(Status::CODE_WRONG_MATCH, Status::$msg[Status::CODE_WRONG_MATCH], $match);
 
@@ -1246,7 +1244,7 @@ class FootballApi extends FrontUserController
         $matchId = $return['match_id'];
         if (!$return['matching_info']) {
 
-            if ($matchTlive = AdminMatchTlive::getInstance()->where('match_id', $return['match_id'])->get()) { //已结束并且同步数据
+            if ($matchTlive = AdminMatchTlive::create()->where('match_id', $return['match_id'])->get()) { //已结束并且同步数据
                 $tlive = json_decode($matchTlive->tlive, true);
                 $stats = json_decode($matchTlive->stats, true);
                 $score = json_decode($matchTlive->score, true);
@@ -1314,7 +1312,7 @@ class FootballApi extends FrontUserController
         $resp = json_decode($res, true)['results'];
 
 
-        if (!$matchTlive = AdminMatchTlive::getInstance()->where('match_id', $resp['id'])->get()) {
+        if (!$matchTlive = AdminMatchTlive::create()->where('match_id', $resp['id'])->get()) {
             $data = [
                 'match_id' => $resp['id'],
                 'score' => json_encode($resp['score']),
@@ -1322,7 +1320,7 @@ class FootballApi extends FrontUserController
                 'incidents' => json_encode($resp['incidents']),
                 'tlive' => json_encode($resp['tlive']),
             ];
-            AdminMatchTlive::getInstance()->insert($data);
+            AdminMatchTlive::create($data)->save();
         }
         return $this->writeJson(Status::CODE_OK, Status::$msg[Status::CODE_OK], $resp);
 

@@ -67,7 +67,7 @@ class BasketballMatchNotice  implements TaskInterface
             $columnStats = isset($item['stats']) ? json_encode($item['stats']) : '';
             $columnTlive = isset($item['tlive']) ? json_encode($item['tlive']) : '';
             $columnPlayers = isset($item['players']) ? json_encode($item['players']) : '';
-            if (!$matchTlive = BasketballMatchTlive::getInstance()->where('match_id', $match_id)->get()) {
+            if (!$matchTlive = BasketballMatchTlive::create()->where('match_id', $match_id)->get()) {
                 $match_res = Tool::getInstance()->postApi(sprintf($this->trend_detail, $this->user, $this->secret, $match_id));
                 $match_trend = json_decode($match_res, true);
                 if ($match_trend['code'] != 0) {
@@ -84,7 +84,7 @@ class BasketballMatchNotice  implements TaskInterface
                     'players' => $columnPlayers,
                     'is_stop' => 1
                 ];
-                BasketballMatchTlive::create()->insert($insertData);
+                BasketballMatchTlive::create($insertData)->save();
             } else {
                 $matchTlive->score = $columnScore;
                 $matchTlive->stats = $columnStats;
@@ -115,7 +115,7 @@ class BasketballMatchNotice  implements TaskInterface
         $home_name_zh = $match->home_team_name;
         $away_name_zh = $match->away_team_name;
         $competition_name_zh = $match->competition_name;
-        $users = AdminUser::getInstance()->where('id', $user_ids, 'in')->all();
+        $users = AdminUser::create()->where('id', $user_ids, 'in')->all();
         $prepare_cid_arr = [];
         $uids = [];
         foreach ($users as $user) {
@@ -140,7 +140,7 @@ class BasketballMatchNotice  implements TaskInterface
                 'content' => $content,
                 'item_type' => 4
             ];
-            $rs = AdminNoticeMatch::getInstance()->insert($insertData);
+            $rs = AdminNoticeMatch::create($insertData)->save();
             $pushInfo['title'] = $title;
             $pushInfo['content'] = $content;
             $pushInfo['payload'] = ['item_id' => $match_id, 'item_type' => 4];
@@ -159,7 +159,7 @@ class BasketballMatchNotice  implements TaskInterface
                 'item_type' => 4
             ];
             //足球:1:进球 10 即将开赛 12结束      篮球:1结束 2即将开始
-            $rs = AdminNoticeMatch::getInstance()->insert($insertData);
+            $rs = AdminNoticeMatch::create($insertData)->save();
             $pushInfo['title'] = $title;
             $pushInfo['content'] = $content;
             $pushInfo['payload'] = ['item_id' => $match_id, 'item_type' => 4];
@@ -197,7 +197,7 @@ class BasketballMatchNotice  implements TaskInterface
             if (!$onlineUser['user_id']) { //未登录
                 $is_interest = false;
             } else {
-                if (!$interest = AdminInterestMatches::getInstance()->where('uid', $onlineUser['user_id'])->where('type', AdminInterestMatches::BASKETBALL_TYPE)->get()) {
+                if (!$interest = AdminInterestMatches::create()->where('uid', $onlineUser['user_id'])->where('type', AdminInterestMatches::BASKETBALL_TYPE)->get()) {
                     $is_interest = false;
                 } else {
                     if (in_array($match_id, json_decode($interest->match_ids))) {

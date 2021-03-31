@@ -17,7 +17,7 @@ class AdminMessage extends BaseModel
     const TYPE_NOTICE = 1;
     public function findAll($page, $limit, $where = [])
     {
-        return $this->orderBy('created_at', 'ASC')
+        return $this->order('created_at', 'ASC')
             ->limit(($page - 1) * $limit, $limit)
             ->all();
     }

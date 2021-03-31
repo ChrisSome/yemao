@@ -1,8 +1,9 @@
 <?php
 namespace App\Model;
 
-use App\Base\BaseModel;
-class AdminUserFoulCenter extends BaseModel
+use EasySwoole\ORM\AbstractModel;
+
+class AdminUserFoulCenter extends AbstractModel
 {
     protected $tableName = "admin_user_foul_center";
 

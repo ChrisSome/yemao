@@ -5,14 +5,10 @@ use App\Base\FrontUserController;
 use App\Common\AppFunc;
 use App\lib\FrontService;
 use App\Model\AdminInterestMatches;
-use App\Model\AdminInterestMatchesBak;
-use App\Model\AdminMatch;
-use App\Model\AdminMessage;
 use App\Model\AdminSysSettings;
 use App\Model\AdminUser;
 use App\Model\AdminUserInterestCompetition;
 use App\Model\BasketBallCompetition;
-use App\Model\BasketballHonor;
 use App\Model\BasketballMatch;
 use App\Model\BasketballMatchSeason;
 use App\Model\BasketballMatchTlive;
@@ -34,7 +30,6 @@ use EasySwoole\HttpAnnotation\AnnotationTag\Param;
 use EasySwoole\HttpAnnotation\AnnotationTag\ApiDescription;
 use EasySwoole\HttpAnnotation\AnnotationTag\Method;
 use EasySwoole\HttpAnnotation\AnnotationTag\ApiSuccess;
-use function foo\func;
 
 class BasketballApi extends FrontUserController
 {
@@ -221,7 +216,7 @@ class BasketballApi extends FrontUserController
         }
         $start = strtotime($this->params['time']);
         $end = $start + 60 * 60 * 24;
-        $model = BasketballMatch::getInstance()->where('status_id', self::STATUS_SCHEDULE, 'in')
+        $model = BasketballMatch::create()->where('status_id', self::STATUS_SCHEDULE, 'in')
             ->where('match_time', $is_today ? time() : $start, '>=')->where('match_time', $end, '<')
             ->where('is_delete', 0)
             ->where('competition_id', $selectCompetitionIdArr, 'in')
@@ -298,7 +293,7 @@ class BasketballApi extends FrontUserController
         $start = strtotime($this->params['time']);
 
         $end = $start + 60 * 60 * 24;
-        $matches = BasketballMatch::getInstance()
+        $matches = BasketballMatch::create()
             ->where('match_time', $start, '>=')
             ->where('match_time', $end, '<')
             ->where('status_id', self::STATUS_RESULT, 'in')
@@ -398,10 +393,10 @@ class BasketballApi extends FrontUserController
         if (!$this->auth['id']) {
             return $this->writeJson(Status::CODE_VERIFY_ERR, '登陆令牌缺失或者已过期');
         }
-        $res = AdminInterestMatches::getInstance()->where('uid', $this->auth['id'])->where('type', AdminInterestMatches::BASKETBALL_TYPE)->get();
+        $res = AdminInterestMatches::create()->where('uid', $this->auth['id'])->where('type', AdminInterestMatches::BASKETBALL_TYPE)->get();
         $matchIds = isset($res->match_ids) ? json_decode($res->match_ids, true) : [];
         if (!$matchIds) return $this->writeJson(Status::CODE_OK, Status::$msg[Status::CODE_OK], []);
-        $matches = BasketballMatch::getInstance()->where('match_id', $matchIds, 'in')->order('match_time', 'ASC')->all();
+        $matches = BasketballMatch::create()->where('match_id', $matchIds, 'in')->order('match_time', 'ASC')->all();
         $data = FrontService::formatBasketballMatch($matches, $this->auth['id'], $matchIds);
         $count = count($data);
         $response = ['list' => $data, 'count' => $count];
@@ -499,7 +494,7 @@ class BasketballApi extends FrontUserController
         list($selectCompetitionIdArr, $interestMatchArr) = AdminUser::getUserShowBasketballCompetition($userId);
         if (!$selectCompetitionIdArr) return $this->writeJson(Status::CODE_OK, Status::$msg[Status::CODE_OK], ['list' => [], 'count' => 0, 'user_interest_count' => count($interestMatchArr)]);
 
-        $todayMatch = BasketballMatch::getInstance()->where('match_time', $start, '>=')
+        $todayMatch = BasketballMatch::create()->where('match_time', $start, '>=')
             ->where('competition_id', $selectCompetitionIdArr, 'in')
             ->where('status_id', 0, '<>')
             ->where('is_delete', 0)
@@ -555,7 +550,7 @@ class BasketballApi extends FrontUserController
     {
         $recommandCompetitionId = AdminSysSettings::create()->where('sys_key', AdminSysSettings::JSON_BASKETBALL_COMPETITION)->get();
         $userId = !empty($this->auth['id']) ? (int)$this->auth['id'] : 0;
-        if (!$userInterestCompetition = AdminUserInterestCompetition::getInstance()->where('user_id', $userId)->where('type', 2)->get()) {
+        if (!$userInterestCompetition = AdminUserInterestCompetition::create()->where('user_id', $userId)->where('type', 2)->get()) {
             $userInterestCompetition = [];
         } else {
             $userInterestCompetition = json_decode($userInterestCompetition->competition_ids, true);
@@ -608,7 +603,7 @@ class BasketballApi extends FrontUserController
             return $this->writeJson(Status::CODE_W_PARAM, Status::$msg[Status::CODE_W_PARAM]);
         }
 
-        $competitionModel = BasketBallCompetition::getInstance();
+        $competitionModel = BasketBallCompetition::create();
         if ($categoryId) {
             $competitionModel = $competitionModel->where('category_id', $categoryId);
         }
@@ -663,10 +658,10 @@ class BasketballApi extends FrontUserController
     {
         $playerId = !empty($this->params['player_id']) ? (int)$this->params['player_id'] : 0;
         if (!$playerId) return $this->writeJson(Status::CODE_W_PARAM, Status::$msg[Status::CODE_W_PARAM]);
-        if ($player = BasketballPlayer::getInstance()->where('player_id', $playerId)->get()) {
+        if ($player = BasketballPlayer::create()->where('player_id', $playerId)->get()) {
             $type = !empty($this->params['type']) ? (int)$this->params['type'] : 1; //1基本资料 2数据统计 3数据对比
             if ($type == 1) {//基本资料
-                if ($playerHonorRes = BasketballPlayerHonor::getInstance()->where('player_id', $player->player_id)->get()) {
+                if ($playerHonorRes = BasketballPlayerHonor::create()->where('player_id', $player->player_id)->get()) {
                     $playerHonor = json_decode($playerHonorRes->honors, true);
                 } else {
                     $playerHonor = [];
@@ -692,8 +687,8 @@ class BasketballApi extends FrontUserController
                     return $this->writeJson(Status::CODE_OK, Status::$msg[Status::CODE_OK], null);
                 }
                 $seasonIds = json_decode($season, true);
-                $res = BasketballSeasonAllStatsDetail::getInstance()->where('season_id', $seasonIds, 'in')->all();
-                $seasons = BasketballSeasonList::getInstance()->where('season_id', $seasonIds, 'in')->all();
+                $res = BasketballSeasonAllStatsDetail::create()->where('season_id', $seasonIds, 'in')->all();
+                $seasons = BasketballSeasonList::create()->where('season_id', $seasonIds, 'in')->all();
                 if ($seasons) {
                     $competitionId = end($seasons)['competition_id'];
                 } else {
@@ -704,7 +699,7 @@ class BasketballApi extends FrontUserController
                     $sortSeasonList[$v->season_id] = $v;
                 });
                 if (!$competitionId) return $this->writeJson(Status::CODE_W_PARAM, Status::$msg[Status::CODE_W_PARAM]);
-                $teams = BasketballTeam::getInstance()->field(['team_id', 'short_name_zh'])->where('competition_id', $competitionId)->all();
+                $teams = BasketballTeam::create()->field(['team_id', 'short_name_zh'])->where('competition_id', $competitionId)->all();
                 array_walk($teams, function ($tv, $tk) use(&$formatTeams) {
                     $formatTeams[$tv->team_id] = $tv;
                 });
@@ -758,7 +753,7 @@ class BasketballApi extends FrontUserController
         $teamId = isset($this->params['team_id']) ? (int)$this->params['team_id'] : 0;
         $type = isset($this->params['type']) ? (int)$this->params['type'] : 1;
         if (!$teamId || !$type) return $this->writeJson(Status::CODE_W_PARAM, Status::$msg[Status::CODE_W_PARAM]);
-        if (!$team = BasketballTeam::getInstance()->where('team_id', $teamId)->get()) {
+        if (!$team = BasketballTeam::create()->where('team_id', $teamId)->get()) {
             return $this->writeJson(Status::CODE_WRONG_RES, Status::$msg[Status::CODE_WRONG_RES]);
         }
         if ($competition = $team->competitionInfo()) {
@@ -778,7 +773,7 @@ class BasketballApi extends FrontUserController
             case 1: //基本信息
                 $selectSeasonId = $seasonList ? end($seasonList)['season_id'] : 0;
                 $teamRankInfo = null;
-                if ($seasonTable = BasketballSeasonTable::getInstance()->where('season_id', $selectSeasonId)->get()) {
+                if ($seasonTable = BasketballSeasonTable::create()->where('season_id', $selectSeasonId)->get()) {
                     $table = json_decode($seasonTable->tables, true);
                     foreach ($table as $tableItem) {
                         if ($tableItem['scope'] != 5) {
@@ -798,7 +793,7 @@ class BasketballApi extends FrontUserController
                 }
                 $basic['teamRank'] = $teamRankInfo;
                 //总冠军荣誉
-                $honor = BasketballTeamHonorList::getInstance()->where('team_id', $teamId)->all();
+                $honor = BasketballTeamHonorList::create()->where('team_id', $teamId)->all();
                 $basic['honor'] = $honor;
                 $basic['currentSeasonId'] = $selectSeasonId;
                 return $this->writeJson(Status::CODE_OK, Status::$msg[Status::CODE_OK], $basic);
@@ -811,11 +806,11 @@ class BasketballApi extends FrontUserController
                 $competitionId = $team->competition_id;
                 if (!$competitionId) return $this->writeJson(Status::CODE_W_PARAM, Status::$msg[Status::CODE_W_PARAM]);
 
-                $teams = BasketballTeam::getInstance()->field(['team_id', 'logo', 'name_zh', 'short_name_zh'])->where('competition_id', $competitionId)->all();
+                $teams = BasketballTeam::create()->field(['team_id', 'logo', 'name_zh', 'short_name_zh'])->where('competition_id', $competitionId)->all();
                 array_walk($teams, function($v) use(&$formatTeams){
                     $formatTeams[$v->team_id] = $v;
                 });
-                if ($seasonTable = BasketballSeasonTable::getInstance()->where('season_id', $selectSeasonId)->get()) {
+                if ($seasonTable = BasketballSeasonTable::create()->where('season_id', $selectSeasonId)->get()) {
                     $table = json_decode($seasonTable->tables, true);
                     foreach ($table as $tableItem) {
                         if ($tableItem['scope'] == 5) {
@@ -832,7 +827,7 @@ class BasketballApi extends FrontUserController
                 break;
             case 3://赛季赛程
                 $selectSeasonId = end($seasonList)['season_id'];
-                if (!$seasonMatchList = BasketballMatchSeason::getInstance()->where('season_id', $selectSeasonId)->where('(home_team_id=' . $teamId . ' or away_team_id=' . $teamId . ')')->all()) {
+                if (!$seasonMatchList = BasketballMatchSeason::create()->where('season_id', $selectSeasonId)->where('(home_team_id=' . $teamId . ' or away_team_id=' . $teamId . ')')->all()) {
                     return $this->writeJson(Status::CODE_W_PARAM, Status::$msg[Status::CODE_W_PARAM], []);
                 } else {
                     $matchList = FrontService::formatBasketballMatch($seasonMatchList, 0, []);
@@ -843,7 +838,7 @@ class BasketballApi extends FrontUserController
                 $selectSeasonId = !empty($this->params['select_season_id']) ? (int)$this->params['select_season_id'] :end($seasonList)['season_id'];
                 $scope = !empty($this->params['scope']) ? (int)$this->params['scope'] : 5; //常规赛
                 $formatTeamStat = $formatPlayerStats = $return =[];
-                if ($res = BasketballSeasonAllStatsDetail::getInstance()->where('season_id', $selectSeasonId)->get()) {
+                if ($res = BasketballSeasonAllStatsDetail::create()->where('season_id', $selectSeasonId)->get()) {
                     $teamStats = json_decode($res->team_stats, true);
 
                     foreach ($teamStats as $teamStat) {
@@ -854,7 +849,7 @@ class BasketballApi extends FrontUserController
 
                     $playerStats = json_decode($res->player_stats, true);
                     //球员映射图
-                    $players = BasketballPlayer::getInstance()->where('team_id', $teamId)->all();
+                    $players = BasketballPlayer::create()->where('team_id', $teamId)->all();
                     foreach ($players as $player) {
                         $playersMap[$player->player_id] = ['player_id' => $player->player_id, 'logo' => $player->logo, 'short_name_zh' => $player->short_name_zh, 'name_zh' => $player->name_zh];
                     }
@@ -959,11 +954,11 @@ class BasketballApi extends FrontUserController
                 break;
             case 5://阵容
                 $formatSquad = [];
-                if ($squadRes = BasketballSquadList::getInstance()->where('team_id', $teamId)->get()) {
+                if ($squadRes = BasketballSquadList::create()->where('team_id', $teamId)->get()) {
                     $squad = json_decode($squadRes->squad, true);
                     //球队映射图
                     $playerIds = array_column(array_column($squad, 'player'), 'id');
-                    $playersMap = BasketballPlayer::getInstance()->where('player_id', $playerIds, 'in')->all();
+                    $playersMap = BasketballPlayer::create()->where('player_id', $playerIds, 'in')->all();
                     foreach ($playersMap as $playerItem) {
                         $formatPlayersMap[$playerItem['player_id']] = $playerItem->toArray();
                     }
@@ -987,14 +982,14 @@ class BasketballApi extends FrontUserController
         if (!$matchId = (int)$this->params['match_id']) {
             return $this->writeJson(Status::CODE_W_PARAM, Status::$msg[Status::CODE_W_PARAM]);
         }
-        if (!$match = BasketballMatchSeason::getInstance()->where('match_id', $matchId)->get()) {
+        if (!$match = BasketballMatchSeason::create()->where('match_id', $matchId)->get()) {
             return $this->writeJson(Status::CODE_WRONG_RES, Status::$msg[Status::CODE_WRONG_RES]);
         }
         $userId = isset($this->auth['id']) ? (int)$this->auth['id'] : 0;
 
         switch ($type) {
             case 1: //直播 比赛详情
-                if ($interetRes = AdminInterestMatches::getInstance()->where('type', 2)->where('uid', $userId)->get()) {
+                if ($interetRes = AdminInterestMatches::create()->where('type', 2)->where('uid', $userId)->get()) {
                     $userInterestMatch = json_decode($interetRes->match_ids, true);
                 } else {
                     $userInterestMatch = [];
@@ -1003,7 +998,7 @@ class BasketballApi extends FrontUserController
                 $formatMatch = $basic[0];
                 //最后一节技术统计
                 $formatScore = $formatTlive = $formatStats = $formatMatchTrend = null;
-                if ($basketBallTlive = BasketballMatchTlive::getInstance()->where('match_id', $matchId)->get()) {
+                if ($basketBallTlive = BasketballMatchTlive::create()->where('match_id', $matchId)->get()) {
                     $formatMatchTrend = !empty($basketBallTlive->match_trend) ? json_decode($basketBallTlive->match_trend, true) : null;
                     if ($basketBallTlive->is_stop == 1) {
                         $formatTlive = json_decode($basketBallTlive->tlive, true);
@@ -1033,7 +1028,7 @@ class BasketballApi extends FrontUserController
 
                 break;
             case 3: //球员技术统计
-                if ($basketBallTlive = BasketballMatchTlive::getInstance()->where('match_id', $matchId)->where('is_stop', 1)->get()) {
+                if ($basketBallTlive = BasketballMatchTlive::create()->where('match_id', $matchId)->where('is_stop', 1)->get()) {
                     $players = json_decode($basketBallTlive->players, true);
                 } else if ($basketBallTlive = Cache::get('basketball-match-players-' . $matchId)) {
                     $players = json_decode($basketBallTlive, true);
@@ -1137,11 +1132,11 @@ class BasketballApi extends FrontUserController
                 break;
             case 2: //聊天，倒数二十条消息
                 $formatMessage = [];
-                if ($message = ChatHistory::getInstance()->where('sport_type', 2)->where('match_id', $matchId)->order('created_at', 'ASC')->limit(20)->all()) {
+                if ($message = ChatHistory::create()->where('sport_type', 2)->where('match_id', $matchId)->order('created_at', 'ASC')->limit(20)->all()) {
                     $senderUserIds = array_column($message, 'sender_user_id');
                     $atUserIds = array_column($message, 'at_user_id');
                     $userIds = array_merge($senderUserIds, $atUserIds);
-                    $users = AdminUser::getInstance()->where('id', $userIds, 'in')->field(['id', 'nickname', 'level', 'photo'])->all();
+                    $users = AdminUser::create()->where('id', $userIds, 'in')->field(['id', 'nickname', 'level', 'photo'])->all();
                     //用户映射图
                     $formatUsers = $formatMessage = [];
                     array_walk($users, function ($v, $k) use (&$formatUsers) {
@@ -1168,12 +1163,12 @@ class BasketballApi extends FrontUserController
                 //获取赛季id  比赛->赛事->当前赛季id
                 $homeTeamId = $match->home_team_id;
                 $awayTeamId = $match->away_team_id;
-                $matchInSeason = BasketballMatchSeason::getInstance()->where('match_id', $match->match_id)->get();
+                $matchInSeason = BasketballMatchSeason::create()->where('match_id', $match->match_id)->get();
 
                 $seasonId = $matchInSeason->season_id;
                 $prepareHandleTableItem = $homeTeamInfo = $awayTeamInfo = null;
                 //赛季积分榜 只取常规赛数据
-                if ($seasonTable = BasketballSeasonTable::getInstance()->where('season_id', $seasonId)->get()) {
+                if ($seasonTable = BasketballSeasonTable::create()->where('season_id', $seasonId)->get()) {
                     $tableInfo = json_decode($seasonTable->tables, true);
                     $prepareHandleTableItem = $info = null;
                     foreach ($tableInfo as $itemTable) {
@@ -1199,7 +1194,7 @@ class BasketballApi extends FrontUserController
 
                     //场均数据
                     //赛季球队球员信息
-                    $seasonStatsDetail = BasketballSeasonAllStatsDetail::getInstance()->where('season_id', $seasonId)->get();
+                    $seasonStatsDetail = BasketballSeasonAllStatsDetail::create()->where('season_id', $seasonId)->get();
                     $statsDetailInfo = json_decode($seasonStatsDetail->team_stats, true);
 
                     if (!$statsDetailInfo) return $this->writeJson(Status::CODE_OK, Status::$msg[Status::CODE_OK], []);
@@ -1215,7 +1210,7 @@ class BasketballApi extends FrontUserController
                 //历史交锋是否同主客
                 $isHistorySameHomeAway = isset($this->params['is_history_same_home_away']) ? (int)$this->params['is_history_same_home_away'] : 0;
                 //历史交锋 与 近期战绩
-                $seasonMatchesList = BasketballMatchSeason::getInstance()
+                $seasonMatchesList = BasketballMatchSeason::create()
 //                    ->where('match_time', time(), '<')
                     ->where('status_id', [1,2,3,4,5,6,7,8,9,10], 'in')
                     ->where('(home_team_id=' . $homeTeamId . ' or away_team_id=' . $homeTeamId . ' or home_team_id=' . $awayTeamId . ' or away_team_id=' . $awayTeamId . ')')
@@ -1288,11 +1283,11 @@ class BasketballApi extends FrontUserController
     public function basketballDataCenter()
     {
         //获取title栏
-        $setting = AdminSysSettings::getInstance()->where('sys_key', AdminSysSettings::BASKETBALL_COMPETITION)->get();
+        $setting = AdminSysSettings::create()->where('sys_key', AdminSysSettings::BASKETBALL_COMPETITION)->get();
         $formatCompetition = [];
         if ($competitionIds = json_decode($setting->sys_value)) {
-            $competitions = BasketBallCompetition::getInstance()->field(['competition_id', 'short_name_zh', 'logo'])->where('competition_id', $competitionIds, 'in')->all();
-            $seasons = BasketballSeasonList::getInstance()->field(['year', 'competition_id', 'has_player_stats', 'has_team_stats', 'season_id'])->where('competition_id', $competitionIds, 'in')->all();
+            $competitions = BasketBallCompetition::create()->field(['competition_id', 'short_name_zh', 'logo'])->where('competition_id', $competitionIds, 'in')->all();
+            $seasons = BasketballSeasonList::create()->field(['year', 'competition_id', 'has_player_stats', 'has_team_stats', 'season_id'])->where('competition_id', $competitionIds, 'in')->all();
 
             foreach ($competitions as $competition) {
                 $competition = $competition->toArray();
@@ -1316,7 +1311,7 @@ class BasketballApi extends FrontUserController
             return $this->writeJson(Status::CODE_W_PARAM, Status::$msg[Status::CODE_W_PARAM]);
         }
         if (!$selectSeasonId) {
-            if ($seasonList = BasketballSeasonList::getInstance()->where('competition_id', $competitionId)->where('is_current', 1)->get()) {
+            if ($seasonList = BasketballSeasonList::create()->where('competition_id', $competitionId)->where('is_current', 1)->get()) {
                 $selectSeasonId = $seasonList->season_id;
             } else {
                 return $this->writeJson(Status::CODE_W_PARAM, Status::$msg[Status::CODE_W_PARAM]);
@@ -1326,11 +1321,11 @@ class BasketballApi extends FrontUserController
         switch ($type) {
             case 1:
                 //排名
-                if (!$basketballSeasonTable = BasketballSeasonTable::getInstance()->where('season_id', $selectSeasonId)->get()) {
+                if (!$basketballSeasonTable = BasketballSeasonTable::create()->where('season_id', $selectSeasonId)->get()) {
                     return $this->writeJson(Status::CODE_WRONG_RES, Status::$msg[Status::CODE_WRONG_RES], []);
                 } else {
                     $tableInfo = json_decode($basketballSeasonTable->tables, true);
-                    $teams = BasketballTeam::getInstance()->field(['team_id', 'short_name_zh', 'logo'])->where('competition_id', $competitionId)->all();
+                    $teams = BasketballTeam::create()->field(['team_id', 'short_name_zh', 'logo'])->where('competition_id', $competitionId)->all();
                     array_walk($teams, function ($v, $k) use (&$formatTeams) {
                         $formatTeams[$v['team_id']] = $v;
                     });
@@ -1352,26 +1347,26 @@ class BasketballApi extends FrontUserController
                 $page = isset($this->params['page']) ? (int)$this->params['page'] : 1;
                 $size = isset($this->params['size']) ? (int)$this->params['size'] : 20;
                 $uid = isset($this->auth['id']) ? (int)$this->auth['id'] : 0;
-                $seasonMatchList = BasketballMatchSeason::getInstance()->where('competition_id', $competitionId)->where('season_id', $selectSeasonId)->getLimit($page, $size, 'match_time', 'ASC');
+                $seasonMatchList = BasketballMatchSeason::create()->where('competition_id', $competitionId)->where('season_id', $selectSeasonId)->getLimit($page, $size, 'match_time', 'ASC');
                 $list = $seasonMatchList->all(null);
                 $count = $seasonMatchList->lastQueryResult()->getTotalCount();
                 $formatBasketBallMatch = FrontService::formatBasketballMatch($list, $uid, []);
                 return $this->writeJson(Status::CODE_OK, Status::$msg[Status::CODE_OK],['list' => $formatBasketBallMatch, 'count' => $count]);
                 break;
             case 3: //球员排行榜
-                if ($seasonStats = BasketballSeasonAllStatsDetail::getInstance()->where('season_id', $selectSeasonId)->get()) {
+                if ($seasonStats = BasketballSeasonAllStatsDetail::create()->where('season_id', $selectSeasonId)->get()) {
                     $playerStats = json_decode($seasonStats->player_stats, true);
                     //球员映射图
                     $playerIds = array_column($playerStats, 'player_id');
                     if (!$playerIds) return $this->writeJson(Status::CODE_OK, Status::$msg[Status::CODE_OK], null);
-                    $players = BasketballPlayer::getInstance()->field(['player_id', 'short_name_zh', 'logo', 'name_zh'])->where('player_id', $playerIds, 'in')->all();
+                    $players = BasketballPlayer::create()->field(['player_id', 'short_name_zh', 'logo', 'name_zh'])->where('player_id', $playerIds, 'in')->all();
                     $formatUsers = [];
                     array_walk($players, function($v, $k) use(&$formatUsers) {
                         $formatUsers[$v->player_id] = $v;
                     });
                     //球队映射图
                     $teamIds = array_column($playerStats, 'team_id');
-                    $teams = BasketballTeam::getInstance()->field(['team_id', 'logo', 'short_name_zh', 'name_zh'])->where('team_id', $teamIds, 'in')->all();
+                    $teams = BasketballTeam::create()->field(['team_id', 'logo', 'short_name_zh', 'name_zh'])->where('team_id', $teamIds, 'in')->all();
                     $formatTeams = [];
                     array_walk($teams, function ($tv, $tk) use (&$formatTeams) {
                         $formatTeams[$tv->team_id] = $tv;
@@ -1529,13 +1524,13 @@ class BasketballApi extends FrontUserController
             case 4:
                 //球队排行
 
-                if ($seasonStats = BasketballSeasonAllStatsDetail::getInstance()->where('season_id', $selectSeasonId)->get()) {
+                if ($seasonStats = BasketballSeasonAllStatsDetail::create()->where('season_id', $selectSeasonId)->get()) {
                     $teamStats = json_decode($seasonStats->team_stats, true);
                     $teamIds = array_column($teamStats, 'team_id');
                     if (!$teamIds) return $this->writeJson(Status::CODE_OK, Status::$msg[Status::CODE_OK], null);
 
                     //球队映射图
-                    $teams = BasketballTeam::getInstance()->field(['team_id', 'short_name_zh', 'logo'])->where('team_id', $teamIds, 'in')->all();
+                    $teams = BasketballTeam::create()->field(['team_id', 'short_name_zh', 'logo'])->where('team_id', $teamIds, 'in')->all();
                     $formatTeams = [];
 
                     array_walk($teams, function ($v, $k) use (&$formatTeams) {
@@ -1752,9 +1747,9 @@ class BasketballApi extends FrontUserController
     public function basketballHotSearch()
     {
         //NBA  CBA NCAA
-        $competition = BasketBallCompetition::getInstance()->field(['competition_id', 'short_name_zh'])->where('competition_id', [1,3], 'in')->all();
+        $competition = BasketBallCompetition::create()->field(['competition_id', 'short_name_zh'])->where('competition_id', [1,3], 'in')->all();
 
-        $competitionSeason = BasketballSeasonList::getInstance()->field(['competition_id', 'year', 'season_id'])->where('competition_id', [1, 3], 'in')->all();
+        $competitionSeason = BasketballSeasonList::create()->field(['competition_id', 'year', 'season_id'])->where('competition_id', [1, 3], 'in')->all();
         array_walk($competitionSeason, function ($v) use(&$formatSeason) {
             $formatSeason[$v->competition_id][] = $v;
         });

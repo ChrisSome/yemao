@@ -53,7 +53,7 @@ class Match extends Base
         //设置房间对象
         AppFunc::userEnterRoom($args['match_id'], $fd);
         //最近二十条聊天记录
-        $lastMessages = ChatHistory::getInstance()->where('match_id', $args['match_id'])->where('sport_type', 1)->order('created_at', 'DESC')->limit(20)->all();
+        $lastMessages = ChatHistory::create()->where('match_id', $args['match_id'])->where('sport_type', 1)->order('created_at', 'DESC')->limit(20)->all();
         //比赛状态
         $match = DbManager::getInstance()->invoke(function ($client) use ($matchId) {
             $matchModel = SeasonMatchList::invoke($client);

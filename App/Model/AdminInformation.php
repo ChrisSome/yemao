@@ -2,9 +2,9 @@
 
 namespace App\Model;
 
-use App\Base\BaseModel;
+use EasySwoole\ORM\AbstractModel;
 
-class AdminInformation extends BaseModel
+class AdminInformation extends AbstractModel
 {
     const STATUS_DELETE = 0;
     const STATUS_NORMAL = 1;

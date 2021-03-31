@@ -68,7 +68,7 @@ class WebSocketEvents
         Log::getInstance()->info('startFd-' . $fd . '-user_id-' . $user_id);
         $match_id = isset($params['match_id']) ? (int)$params['match_id'] : 0;
         if ($user_id) {
-            $user = AdminUser::getInstance()->where('id', $user_id)->get();
+            $user = AdminUser::create()->where('id', $user_id)->get();
         }
         //如果已经有设备登陆,则强制退出, 根据后台配置是否允许多终端登陆
 

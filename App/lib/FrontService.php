@@ -52,7 +52,7 @@ class  FrontService {
         });
 
         // 点赞/收藏数据映射
-        $tmp = Utils::queryHandler(AdminUserOperate::getInstance(),
+        $tmp = Utils::queryHandler(AdminUserOperate::create(),
             '(type=1 or type=2) and item_type=1 and user_id=' . $authId . ' and is_cancel=0 and item_id in(' . join(',', $postIds) . ')', null,
             '*', false);
         foreach ($tmp as $v) {
@@ -60,18 +60,18 @@ class  FrontService {
             $operateMapper[$key] = 1;
         }
         // 最新发帖时间映射
-        $commentMapper = Utils::queryHandler(AdminPostComment::getInstance(), 'post_id in(' . join(',', $postIds) . ')', null,
+        $commentMapper = Utils::queryHandler(AdminPostComment::create(), 'post_id in(' . join(',', $postIds) . ')', null,
             'post_id,max(created_at) time', false, ['group' => 'post_id'], 'post_id,time,1');
         // 类型数据映射
-        $categoryMapper = empty($categoryIds) ? [] : Utils::queryHandler(AdminUserPostsCategory::getInstance(), 'id in(' . join(',', $categoryIds) . ')', null,
+        $categoryMapper = empty($categoryIds) ? [] : Utils::queryHandler(AdminUserPostsCategory::create(), 'id in(' . join(',', $categoryIds) . ')', null,
             '*', false, null, 'id,*,1');
         // 设置数据映射 & 用户数据映射
         $settingMapper = $userMapper = [];
         if (!empty($userIds)) {
-            $settingMapper = Utils::queryHandler(AdminUserSetting::getInstance(),
+            $settingMapper = Utils::queryHandler(AdminUserSetting::create(),
                 'user_id in(' . join(',', $userIds) . ')', null,
                 'user_id,private', false, null, 'user_id,private,1');
-            $userMapper = Utils::queryHandler(AdminUser::getInstance(),
+            $userMapper = Utils::queryHandler(AdminUser::create(),
                 'id in(' . join(',', $userIds) . ')', null,
                 'id,photo,nickname,level,is_offical', false, null, 'id,*,1');
         }
@@ -181,7 +181,7 @@ class  FrontService {
             if ($id > 0 && !in_array($id, $userIds)) $userIds[] = $id;
         });
         $where = 'item_type=4 and type=1 and is_cancel=0 and user_id=' . $authId . ' and item_id in(' . join(',', $commentIds) . ')';
-        $tmp = AdminUserOperate::getInstance()->func(function ($builder) use ($where) {
+        $tmp = AdminUserOperate::create()->func(function ($builder) use ($where) {
             $builder->raw('select * from admin_user_operates where ' . $where, []);
             return true;
         });
@@ -191,7 +191,7 @@ class  FrontService {
         }
         if (!empty($informationIds)) {
             $where = 'id in(' . join(',', $informationIds) . ')';
-            $tmp = AdminInformation::getInstance()->func(function ($builder) use ($where) {
+            $tmp = AdminInformation::create()->func(function ($builder) use ($where) {
                 $builder->raw('select * from admin_information where ' . $where, []);
                 return true;
             });
@@ -202,7 +202,7 @@ class  FrontService {
         }
         if (!empty($userIds)) {
             $where = 'id in(' . join(',', $userIds) . ')';
-            $tmp = AdminUser::getInstance()->func(function ($builder) use ($where) {
+            $tmp = AdminUser::create()->func(function ($builder) use ($where) {
                 $builder->raw('select id,photo,nickname,level,is_offical from admin_user where ' . $where, []);
                 return true;
             });
@@ -213,7 +213,7 @@ class  FrontService {
         }
         $parentCommentIds = array_column($informationComments, 'parent_id');
         if ($parentCommentIds) {
-            $parentComments = AdminInformationComment::getInstance()->field(['id', 'content'])->where('id', $parentCommentIds, 'in')->all();
+            $parentComments = AdminInformationComment::create()->field(['id', 'content'])->where('id', $parentCommentIds, 'in')->all();
             array_walk($parentComments, function ($pv, $pk) use(&$formatParentComments) {
                 $formatParentComments[$pv->id] = base64_decode($pv->content);
             });
@@ -258,13 +258,13 @@ class  FrontService {
      */
     public static function myPostsCount($uid)
     {
-        return AdminUserPost::getInstance()->where('user_id', $uid)->where('status', AdminUserPost::STATUS_EXAMINE_SUCC)->count();
+        return AdminUserPost::create()->where('user_id', $uid)->where('status', AdminUserPost::STATUS_EXAMINE_SUCC)->count();
 
     }
 
 
     public static function ifFabolus($uid, $cid) {
-        return AdminPostOperate::getInstance()->get(['comment_id' => $cid, 'user_id' => $uid, 'action_type' => 1]);
+        return AdminPostOperate::create()->get(['comment_id' => $cid, 'user_id' => $uid, 'action_type' => 1]);
 
     }
 
@@ -296,7 +296,7 @@ class  FrontService {
      */
     public static function getHotCompetitionIds(){
         $competition_ids = [];
-        if ($setting = AdminSysSettings::getInstance()->where('sys_key', AdminSysSettings::COMPETITION_ARR)->get()) {
+        if ($setting = AdminSysSettings::create()->where('sys_key', AdminSysSettings::COMPETITION_ARR)->get()) {
             $competition_ids = json_decode($setting->sys_value, true);
         }
         return $competition_ids;
@@ -321,13 +321,13 @@ class  FrontService {
         $awayTeamIds = array_column($matches, 'away_team_id');
         //比赛id集合
         $matchIds = array_column($matches, 'match_id');
-        $steams = AdminSteam::getInstance()->field(['match_id', 'mobile_link'])->where('match_id', $matchIds, 'in')->all();
+        $steams = AdminSteam::create()->field(['match_id', 'mobile_link'])->where('match_id', $matchIds, 'in')->all();
         array_walk($steams, function ($sv, $sk) use(&$formatSteams) {
             $formatSteams[$sv->match_id] = $sv->mobile_link;
         });
         $teamIds = array_merge($homeTeamIds, $awayTeamIds);
         $teamIds = array_keys(array_flip($teamIds));
-        $teams = AdminTeam::getInstance()->field(['name_zh', 'short_name_zh', 'team_id', 'logo'])->where('team_id', $teamIds, 'in')->all();
+        $teams = AdminTeam::create()->field(['name_zh', 'short_name_zh', 'team_id', 'logo'])->where('team_id', $teamIds, 'in')->all();
         $formatTeams = [];
         array_walk($teams, function ($v, $k) use(&$formatTeams) {
             $formatTeams[$v['team_id']] = $v;
@@ -335,7 +335,7 @@ class  FrontService {
         //赛事映射表
         $competitionId = array_column($matches, 'competition_id');
         $uniqueCompetitionId = array_keys(array_flip($competitionId));
-        $competitions = AdminCompetition::getInstance()->field(['competition_id', 'name_zh', 'short_name_zh', 'name_zh', 'primary_color'])->where('competition_id', $uniqueCompetitionId, 'in')->all();
+        $competitions = AdminCompetition::create()->field(['competition_id', 'name_zh', 'short_name_zh', 'name_zh', 'primary_color'])->where('competition_id', $uniqueCompetitionId, 'in')->all();
         array_walk($competitions, function ($cv, $vk) use(&$formatCompetition) {
             $formatCompetition[$cv->competition_id] = $cv;
         });
@@ -414,7 +414,7 @@ class  FrontService {
         //用户关注比赛
         $userInterestMatchIds = $interestMatchArr;
         $competitionIds = array_column($matches, 'competition_id');
-        $competition = BasketBallCompetition::getInstance()->field(['competition_id', 'name_zh', 'short_name_zh'])->where('competition_id', $competitionIds, 'in')->all();
+        $competition = BasketBallCompetition::create()->field(['competition_id', 'name_zh', 'short_name_zh'])->where('competition_id', $competitionIds, 'in')->all();
         array_walk($competition, function ($v, $k) use(&$formatCompetition) {
             $item = ['competition_id' => $v->competition_id, 'name_zh' => $v->name_zh, 'short_name_zh' => $v->short_name_zh];
             $formatCompetition[$v->competition_id] = $item;
@@ -517,7 +517,7 @@ class  FrontService {
         });
         if (empty($playerIds)) return [];
         // 获取映射数据
-        $tmp = AdminPlayer::getInstance()->func(function ($builder) use ($playerIds) {
+        $tmp = AdminPlayer::create()->func(function ($builder) use ($playerIds) {
             $builder->raw('select * from admin_player_list where player_id in (' . join(',', $playerIds) . ')');
             return true;
         });
@@ -525,7 +525,7 @@ class  FrontService {
             $id = $v['player_id'];
             $playerMapper[$id] = $v;
         }
-        $tmp = empty($teamIds) ? [] : AdminTeam::getInstance()->func(function ($builder) use ($teamIds) {
+        $tmp = empty($teamIds) ? [] : AdminTeam::create()->func(function ($builder) use ($teamIds) {
             $builder->raw('select * from admin_team_list where team_id in (' . join(',', $teamIds) . ')');
             return true;
         });
@@ -575,8 +575,8 @@ class  FrontService {
         $userIds = array_column($informations, 'user_id');
         if (!$userIds) return [];
         $informationIds = array_column($informations, 'id');
-        $users = AdminUser::getInstance()->where('id', $userIds, 'in')->field(['id', 'nickname', 'photo', 'level', 'is_offical'])->all();
-        $operates = AdminUserOperate::getInstance()->where('user_id', $uid)->where('item_id', $informationIds, 'in')->where('item_type', 3)->where('type', 1)->where('is_cancel', 0)->all();
+        $users = AdminUser::create()->where('id', $userIds, 'in')->field(['id', 'nickname', 'photo', 'level', 'is_offical'])->all();
+        $operates = AdminUserOperate::create()->where('user_id', $uid)->where('item_id', $informationIds, 'in')->where('item_type', 3)->where('type', 1)->where('is_cancel', 0)->all();
         $formatUsers = $formatOperate = [];
         array_walk($users, function($v, $k) use(&$formatUsers){
             $formatUsers[$v->id] = $v;
@@ -607,70 +607,6 @@ class  FrontService {
         return $format;
     }
 
-
-    /**
-     * @param $informationList
-     * @param $authId
-     * @return array
-     * @throws
-     */
-    public static function formatInformation($informationList, $authId): array
-    {
-        if (empty($informationList)) return [];
-        // 映射数据
-        $ids = $userIds = $competitionIds = [];
-
-        array_walk($informationList, function ($v) use (&$ids, &$userIds, &$competitionIds) {
-            $id = intval($v->id);
-            if ($id > 0 && !in_array($id, $ids)) $ids[] = $id;
-            $id = intval($v->user_id);
-            if ($id > 0 && !in_array($id, $userIds)) $userIds[] = $id;
-            $id = intval($v->competition_id);
-            if ($id > 0 && !in_array($id, $competitionIds)) $competitionIds[] = $id;
-        });
-        // 用户映射
-        $userMapper = empty($userIds) ? [] : AdminUser::getInstance()
-            ->findAll(['id' => [$userIds, 'in']], 'id,nickname,photo,is_offical,level', null,
-                false, 0, 0, 'id,*,true');
-
-        // 赛事映射
-        $competitionMapper = empty($competitionIds) ? [] : AdminCompetition::getInstance()
-            ->findAll(['id' => [$competitionIds, 'in']], null, null,
-                false, 0, 0, 'id,*,true');
-        $where = ['item_id' => [$ids, 'in'], 'item_type' => 3, 'type' => 1, 'is_cancel' => 0];
-        $tmp = empty($ids) ? [] : AdminUserOperate::getInstance()->findAll($where, 'item_id,user_id');
-        $operateMapper = [];
-        array_walk($tmp, function ($v) use (&$operateMapper, $authId) {
-            $itemId = intval($v['item_id']);
-            $operateMapper[$itemId . '_' . $authId] = 1;
-        });
-
-        $list = [];
-        foreach ($informationList as $v) {
-            if ($v['created_at'] > date('Y-m-d H:i:s')) continue;
-            $id = intval($v['id']);
-            $userId = intval($v['user_id']);
-            $user = empty($userMapper[$userId]) ? [] : $userMapper[$userId];
-            if (empty($user)) continue;
-            $competitionId = intval($v['competition_id']);
-            $competition = empty($competitionMapper[$competitionId]) ? null : $competitionMapper[$competitionId];
-            $list[] = [
-                'id' => $id,
-                'user' => $user,
-                'img' => $v['img'],
-                'title' => $v['title'],
-                'status' => $v['status'],
-                'is_title' => $v['type'] == 1,
-                'created_at' => $v['created_at'],
-                'competition_id' => $competitionId,
-                'respon_number' => intval($v['respon_number']),
-                'fabolus_number' => intval($v['fabolus_number']),
-                'is_fabolus' => $authId > 0 ? !empty($operateMapper[$id . '_' . $authId]) : false,
-                'competition_short_name_zh' => empty($competition['short_name_zh']) ? '' : $competition['short_name_zh'],
-            ];
-        }
-        return $list;
-    }
 
 
     /**

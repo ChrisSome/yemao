@@ -2,9 +2,9 @@
 
 namespace App\Model;
 
-use App\Base\BaseModel;
+use EasySwoole\ORM\AbstractModel;
 
-class AdminInformationComment extends BaseModel
+class AdminInformationComment extends AbstractModel
 {
     const STATUS_REPORTED = 2;
     const STATUS_NORMAL = 0;

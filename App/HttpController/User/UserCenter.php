@@ -19,9 +19,7 @@ use App\Model\AdminUserPost;
 use App\Model\AdminUserSerialPoint;
 use App\Model\AdminUserSetting;
 use App\Model\ChatHistory;
-use App\Utility\Log\Log;
 use App\Utility\Message\Status;
-use EasySwoole\ORM\DbManager;
 use EasySwoole\Validate\Validate;
 
 use EasySwoole\HttpAnnotation\AnnotationController;
@@ -72,7 +70,7 @@ class UserCenter   extends FrontUserController{
 
         $uid = $this->auth['id'];
 
-        $user_info = AdminUser::getInstance()->where('id', $uid)->field(['id', 'nickname', 'photo', 'level', 'is_offical', 'point'])->get();
+        $user_info = AdminUser::create()->where('id', $uid)->field(['id', 'nickname', 'photo', 'level', 'is_offical', 'point'])->get();
         //我的粉丝数
         $fansCount = count(AppFunc::getUserFans($uid));
 
@@ -155,7 +153,7 @@ class UserCenter   extends FrontUserController{
         $type = !empty($this->params['type']) ? (int)$this->params['type'] : 1;
 
         if ($type == 1) { //收藏的帖子
-            $model = AdminUserOperate::getInstance()->alias('o')->join('admin_user_posts as p', 'o.item_id=p.id and o.author_id=p.user_id', 'inner')
+            $model = AdminUserOperate::create()->alias('o')->join('admin_user_posts as p', 'o.item_id=p.id and o.author_id=p.user_id', 'inner')
                 ->field(['p.*'])->where('o.user_id', $user_id)->where('o.type', 2)->where('item_type', 1)->where('o.is_cancel', 0);
             if ($key_word) {
                 $model = $model->where('p.title', '%' . $key_word . '%', 'like');
@@ -167,7 +165,7 @@ class UserCenter   extends FrontUserController{
             $formatPost = FrontService::handPosts($postList, $user_id);
             return $this->writeJson(Status::CODE_OK, Status::$msg[Status::CODE_OK], ['list' => $formatPost, 'count' => $total]);
         } else { //收藏的资讯
-            $model = AdminUserOperate::getInstance()->alias('o')->join('admin_information as i', 'o.item_id=i.id and o.author_id=i.user_id', 'inner')
+            $model = AdminUserOperate::create()->alias('o')->join('admin_information as i', 'o.item_id=i.id and o.author_id=i.user_id', 'inner')
                 ->field(['i.*', 'o.item_id'])->where('o.user_id', $user_id)->where('o.type', 2)->where('item_type', 3)->where('o.is_cancel', 0);
             if ($key_word) {
                 $model = $model->where('i.title', '%' . $key_word . '%', 'like');
@@ -243,7 +241,7 @@ class UserCenter   extends FrontUserController{
         $page = !empty($this->params['page']) ? (int)$this->params['page'] : 1;
         $size = !empty($this->params['size']) ? (int)$this->params['size'] : 20;
 
-        $model = AdminUserPost::getInstance()->where('status', AdminUserPost::NEW_STATUS_SAVE)->where('user_id', $this->auth['id'])->getLimit($page, $size);
+        $model = AdminUserPost::create()->where('status', AdminUserPost::NEW_STATUS_SAVE)->where('user_id', $this->auth['id'])->getLimit($page, $size);
 
         $list = $model->all(null);
         $count = $model->lastQueryResult()->getTotalCount();
@@ -276,7 +274,7 @@ class UserCenter   extends FrontUserController{
         $validate = new Validate();
         $update_data = [];
 
-        if (!$user = AdminUser::getInstance()->where('id', $uid)->get()) {
+        if (!$user = AdminUser::create()->where('id', $uid)->get()) {
             return $this->writeJson(Status::CODE_WRONG_RES, Status::$msg[Status::CODE_WRONG_RES]);
 
         }
@@ -303,7 +301,7 @@ class UserCenter   extends FrontUserController{
             if (!$res) {
                 return $this->writeJson(Status::CODE_W_FORMAT_PASS, Status::$msg[Status::CODE_W_FORMAT_PASS]);
             }
-            $user = AdminUser::getInstance()->where('id', $this->auth['id'])->get();
+            $user = AdminUser::create()->where('id', $this->auth['id'])->get();
             if (!PasswordTool::getInstance()->checkPassword($params['old_password'], $user->password_hash)) {
                 return $this->writeJson(Status::CODE_W_FORMAT_PASS, '旧密码输入错误');
 
@@ -316,10 +314,10 @@ class UserCenter   extends FrontUserController{
 
         if (isset($params['mobile']) && $type == 4) {
             $code = trim($this->params['code']);
-            $phoneCode = AdminUserPhonecode::getInstance()->getLastCodeByMobile(trim($this->params['mobile']));
+            $phoneCode = AdminUserPhonecode::create()->getLastCodeByMobile(trim($this->params['mobile']));
             if (!$phoneCode || $phoneCode->status != 0 || $phoneCode->code != $code) {
                 return $this->writeJson(Status::CODE_W_PHONE_CODE, Status::$msg[Status::CODE_W_PHONE_CODE]);
-            } else if (AdminUser::getInstance()->where('mobile', $params['mobile'])->get()) {
+            } else if (AdminUser::create()->where('mobile', $params['mobile'])->get()) {
                 return $this->writeJson(Status::CODE_PHONE_EXIST, Status::$msg[Status::CODE_PHONE_EXIST]);
             }else if(!preg_match("/^1[3456789]\d{9}$/", $params['mobile'])) {
                 return $this->writeJson(Status::CODE_W_PHONE, Status::$msg[Status::CODE_W_PHONE]);
@@ -335,7 +333,7 @@ class UserCenter   extends FrontUserController{
 
         }
 
-        if (AdminUser::getInstance()->update($update_data, ['id' => $uid])) {
+        if (AdminUser::create()->update($update_data, ['id' => $uid])) {
             return $this->writeJson(Status::CODE_OK, Status::$msg[Status::CODE_OK]);
 
         } else {
@@ -380,7 +378,7 @@ class UserCenter   extends FrontUserController{
         $size = isset($this->params['size']) ? $this->params['size'] : 10;
         if (!$type) {
             //所有消息
-            $allMessage = AdminMessage::getInstance()->field(['id', 'content', 'created_at', 'status', 'type'])
+            $allMessage = AdminMessage::create()->field(['id', 'content', 'created_at', 'status', 'type'])
                 ->where('status', AdminMessage::STATUS_UNREAD)
                 ->where('user_id', $uid)->order('created_at', 'DESC')->all();
 
@@ -415,7 +413,7 @@ class UserCenter   extends FrontUserController{
             $size = $this->params['size'] ?: 10;
 
             //我的通知
-            $model = AdminMessage::getInstance()->where('status', AdminMessage::STATUS_DEL, '<>')
+            $model = AdminMessage::create()->where('status', AdminMessage::STATUS_DEL, '<>')
                 ->where('type', 1)
                 ->where('user_id', $uid)->getLimit($page, $size);
             $list = $model->all(null);
@@ -423,7 +421,7 @@ class UserCenter   extends FrontUserController{
             //系统消息未读
             $format_data = [];
             foreach ($list as $item) {
-                $post = AdminUserPost::getInstance()->where('id', $item['item_id'])->get();
+                $post = AdminUserPost::create()->where('id', $item['item_id'])->get();
                 $data['message_id'] = $item['id'];
                 $data['created_at'] = $item['created_at'];
                 $data['post_info'] = $post ? ['id' => $post->id, 'title' => $post->title, 'created_at' => $post->created_at] : [];
@@ -437,7 +435,7 @@ class UserCenter   extends FrontUserController{
             $formatData = ['data' => $format_data, 'count' => $total];
             return $this->writeJson(Status::CODE_OK, Status::$msg[Status::CODE_OK], $formatData);
         } else if ($type == 2) {
-            $model = AdminMessage::getInstance()->where('user_id', $uid)->where('type', 2)->where('status', AdminMessage::STATUS_DEL, '<>')->getLimit($page, $size);
+            $model = AdminMessage::create()->where('user_id', $uid)->where('type', 2)->where('status', AdminMessage::STATUS_DEL, '<>')->getLimit($page, $size);
             $list = $model->all(null);
             $total = $model->lastQueryResult()->getTotalCount();
 
@@ -448,18 +446,18 @@ class UserCenter   extends FrontUserController{
                 $data['created_at'] = $item['created_at'];
                 $data['status'] = $item['status'];
                 $data['message_id'] = $item['id'];
-                $user_info = AdminUser::getInstance()->where('id', $item['did_user_id'])->field(['id', 'nickname', 'photo', 'level', 'is_offical'])->get();
+                $user_info = AdminUser::create()->where('id', $item['did_user_id'])->field(['id', 'nickname', 'photo', 'level', 'is_offical'])->get();
                 $data['user_info'] = $user_info ? $user_info : [];
 
                 if ($item['item_type'] == 1) { //赞我的帖子
-                    if ($post = AdminUserPost::getInstance()->where('id', $item['item_id'])->get()) {
+                    if ($post = AdminUserPost::create()->where('id', $item['item_id'])->get()) {
                         $data['post_info'] = ['id' => $post->id, 'title' => $post->title, 'content' => base64_decode($post->content)];
 
                     } else {
                         continue;
                     }
                 } else if ($item['item_type'] == 2) { //赞帖子回复
-                    $post_comment = AdminPostComment::getInstance()->where('id', $item['item_id'])->get();
+                    $post_comment = AdminPostComment::create()->where('id', $item['item_id'])->get();
 
                     if ($post_comment) {
                         $post = $post_comment->postInfo();
@@ -470,7 +468,7 @@ class UserCenter   extends FrontUserController{
                     }
 
                 } else if ($item['item_type'] == 4) { //赞资讯回复
-                    if ($information_commnet = AdminInformationComment::getInstance()->where('id', $item['item_id'])->get()) {
+                    if ($information_commnet = AdminInformationComment::create()->where('id', $item['item_id'])->get()) {
                         $information = $information_commnet->getInformation();
                         $data['information_comment_info'] = $information_commnet ? ['id' => $information_commnet->id, 'content' => mb_substr(base64_decode($information_commnet->content), 0, 20)] : [];
                         $data['information_info'] = $information ? ['id' => $information->id, 'title' => $information->title, 'content' => mb_substr($information->content, 0, 20)] : [];
@@ -491,7 +489,7 @@ class UserCenter   extends FrontUserController{
             return $this->writeJson(Status::CODE_OK, Status::$msg[Status::CODE_OK], $formatData);
 
         } else if ($type == 3) { //评论与回复
-            $model = AdminMessage::getInstance()->where('user_id', $uid)->where('type', 3)->where('status', AdminMessage::STATUS_DEL, '<>')->getLimit($page, $size);
+            $model = AdminMessage::create()->where('user_id', $uid)->where('type', 3)->where('status', AdminMessage::STATUS_DEL, '<>')->getLimit($page, $size);
             $list = $model->all(null);
             $total = $model->lastQueryResult()->getTotalCount();
 
@@ -500,7 +498,7 @@ class UserCenter   extends FrontUserController{
 
 
                 if ($item['item_type'] == 1) {//帖子
-                    if (!$post_comment = AdminPostComment::getInstance()->where('id', $item['item_id'])->get()) continue;
+                    if (!$post_comment = AdminPostComment::create()->where('id', $item['item_id'])->get()) continue;
                     $post = $post_comment->postInfo();
                     $data['item_type'] = $item['item_type'];
                     $data['user_info'] = $post_comment->uInfo();
@@ -509,7 +507,7 @@ class UserCenter   extends FrontUserController{
                     $data['status'] = $item['status'];
 
                 } else if ($item['item_type'] == 2) { //帖子评论
-                    if (!$post_comment = AdminPostComment::getInstance()->where('id', $item['item_id'])->get()) continue;
+                    if (!$post_comment = AdminPostComment::create()->where('id', $item['item_id'])->get()) continue;
                     $post = $post_comment->postInfo();
                     $data['item_type'] = $item['item_type'];
                     $data['parent_comment_info'] = $post_comment->getParentContent();
@@ -520,7 +518,7 @@ class UserCenter   extends FrontUserController{
 
                 } else if ($item['item_type'] == 4) { //资讯回复
 
-                    if (!$information_comment = AdminInformationComment::getInstance()->where('id', $item['item_id'])->get()) continue;
+                    if (!$information_comment = AdminInformationComment::create()->where('id', $item['item_id'])->get()) continue;
                     $information = $information_comment->getInformation();
                     $data['information_comment_info'] = $information_comment ? ['id' => $information_comment->id, 'content' => base64_decode($information_comment->content)] : [];
                     $data['information_info'] = $information ? ['id' => $information->id, 'title' => $information->title, 'content' => mb_substr(preg_replace("/(\s|\&nbsp\;|　|\xc2\xa0)/", " ", strip_tags($information->content)), 0, 30)] : [];
@@ -539,12 +537,12 @@ class UserCenter   extends FrontUserController{
             $formatData = ['data' => $format_data, 'count' => $total];
             return $this->writeJson(Status::CODE_OK, Status::$msg[Status::CODE_OK], $formatData);
         } else if ($type == 4) {//用户关注我
-            $model = AdminMessage::getInstance()->where('user_id', $uid)->where('type', 4)->where('status', AdminMessage::STATUS_DEL, '<>')->getLimit($page, $size);
+            $model = AdminMessage::create()->where('user_id', $uid)->where('type', 4)->where('status', AdminMessage::STATUS_DEL, '<>')->getLimit($page, $size);
             $list = $model->all(null);
             $total = $model->lastQueryResult()->getTotalCount();
             $format_data = [];
             foreach ($list as $item) {
-                $user = AdminUser::getInstance()->where('id', $item['did_user_id'])->get();
+                $user = AdminUser::create()->where('id', $item['did_user_id'])->get();
                 $data['message_id'] = $item['id'];
                 $data['created_at'] = $item['created_at'];
                 $data['user_info'] = $user ? ['id' => $user->id, 'nickname' => $user->nickname, 'photo' => $user->photo] : [];
@@ -576,7 +574,7 @@ class UserCenter   extends FrontUserController{
         if ($type == 1) {
             $message_id = $this->params['message_id'];
 
-            if (!$message = AdminMessage::getInstance()->where('id', $message_id)->get()) {
+            if (!$message = AdminMessage::create()->where('id', $message_id)->get()) {
                 return $this->writeJson(Status::CODE_W_PARAM, Status::$msg[Status::CODE_W_PARAM]);
             } else {
                 $message->status = AdminMessage::STATUS_READ;
@@ -584,62 +582,11 @@ class UserCenter   extends FrontUserController{
                 return $this->writeJson(Status::CODE_OK, Status::$msg[Status::CODE_OK]);
             }
         } else if ($type == 2) {
-            AdminMessage::getInstance()->update(['status'=>AdminMessage::STATUS_READ], ['user_id' => $this->auth['id']]);
+            AdminMessage::create()->update(['status'=>AdminMessage::STATUS_READ], ['user_id' => $this->auth['id']]);
             return $this->writeJson(Status::CODE_OK, Status::$msg[Status::CODE_OK]);
 
         }
 
-    }
-
-
-    /**
-     * 回复我的
-     * @return bool
-     */
-    public function commentsToMe()
-    {
-        //评论回复我的
-        $post_comments = AdminPostComment::getInstance()->field(['id', 'content', 'post_id', 'created_at', 'top_comment_id', 'user_id', 'parent_id'])
-            ->where('t_u_id', $this->auth['id'])
-            ->where('status', AdminPostComment::STATUS_DEL, '<>')
-            ->all();
-        foreach ($post_comments as $post_comment) {
-            $user = AdminUser::getInstance()->where('id', $post_comment['user_id'])->get();
-            $data['comment_id'] = $post_comment['id'];
-            $data['comment_content'] = $post_comment['content'];
-            $data['father_comment_content'] = isset($post_comment->getParentContent()->content) ? $post_comment->getParentContent()->content : '';
-            $data['post_title'] = AdminUserPost::getInstance()->find($post_comment['post_id'])->title;
-            $data['post_id'] = $post_comment['post_id'];
-            $data['created_at'] = $post_comment['created_at'];
-            $data['top_comment_id'] = $post_comment['top_comment_id'];
-            $data['comment_type'] = 1;
-            $data['user_info'] = ['user_id' => $user['id'], 'nickname' => $user['nickname'], 'photo' => $user['photo']];
-            $format_post_comment[] = $data;
-            unset($data);
-
-        }
-        //回复我的资讯评论
-        $uid = $this->auth['id'];
-        $information_comments = AdminInformationComment::getInstance()->where('t_u_id', $uid)->where('status', AdminInformationComment::STATUS_DELETE, '<>')->all();
-        foreach ($information_comments as $information_comment) {
-            $user = AdminUser::getInstance()->where('id', $information_comment['user_id'])->get();
-            $data['information_id'] = $information_comment['id'];
-            $data['comment_content'] = $information_comment['content'];
-            $data['father_comment_content'] = $information_comment->getParentComment()->content;
-            $data['information_id'] = $information_comment['information_id'];
-            $data['information_title'] = AdminInformation::getInstance()->where('id', $information_comment['information_id'])->get()->title;
-            $data['created_at'] = $information_comment['created_at'];
-            $data['top_comment_id'] = $information_comment['top_comment_id'];
-            $data['comment_type'] = 2;
-            $data['user_info'] = ['user_id' => $user['id'], 'nickname' => $user['nickname'], 'photo' => $user['photo']];
-            $format_information_comment[] = $data;
-            unset($data);
-        }
-
-        $comments = array_merge($format_post_comment, $format_information_comment);
-        $comment_created_at = array_column($comments, 'created_at');
-        array_multisort($comment_created_at,SORT_DESC,$comments);
-        return $this->writeJson(Status::CODE_OK, Status::$msg[Status::CODE_OK], $comments);
     }
 
 
@@ -671,7 +618,7 @@ class UserCenter   extends FrontUserController{
 
         }
         if ($this->request()->getMethod() == 'GET') {
-            if (!$setting = AdminUserSetting::getInstance()->where('user_id', $this->auth['id'])->get()) {
+            if (!$setting = AdminUserSetting::create()->where('user_id', $this->auth['id'])->get()) {
                 return $this->writeJson(Status::CODE_W_PARAM, Status::$msg[Status::CODE_W_PARAM]);
 
             }
@@ -716,7 +663,7 @@ class UserCenter   extends FrontUserController{
 
             }
 
-            AdminUserSetting::getInstance()->update([$column=>$data], ['user_id' => $this->auth['id']]);
+            AdminUserSetting::create()->update([$column=>$data], ['user_id' => $this->auth['id']]);
 
             return $this->writeJson(Status::CODE_OK, Status::$msg[Status::CODE_OK]);
 
@@ -739,7 +686,7 @@ class UserCenter   extends FrontUserController{
 
         }
         if ($this->request()->getMethod() == 'GET') {
-            if (!$setting = AdminUserSetting::getInstance()->where('user_id', (int)$this->auth['id'])->get()) {
+            if (!$setting = AdminUserSetting::create()->where('user_id', (int)$this->auth['id'])->get()) {
                 return $this->writeJson(Status::CODE_W_PARAM, Status::$msg[Status::CODE_W_PARAM]);
             }
             if ($type == 1) {
@@ -770,7 +717,7 @@ class UserCenter   extends FrontUserController{
             } else {
                 return $this->writeJson(Status::CODE_W_PARAM, Status::$msg[Status::CODE_W_PARAM]);
             }
-            AdminUserSetting::getInstance()->update([$column=>$data], ['user_id' => $this->auth['id']]);
+            AdminUserSetting::create()->update([$column=>$data], ['user_id' => $this->auth['id']]);
 
             return $this->writeJson(Status::CODE_OK, Status::$msg[Status::CODE_OK]);
         }
@@ -787,7 +734,7 @@ class UserCenter   extends FrontUserController{
 
         }
         if ($this->request()->getMethod() == 'GET') {
-            if (!$setting = AdminUserSetting::getInstance()->where('user_id', $this->auth['id'])->get()) {
+            if (!$setting = AdminUserSetting::create()->where('user_id', $this->auth['id'])->get()) {
                 return $this->writeJson(Status::CODE_W_PARAM, Status::$msg[Status::CODE_W_PARAM]);
 
             }
@@ -822,7 +769,7 @@ class UserCenter   extends FrontUserController{
 
             }
 
-            AdminUserSetting::getInstance()->update([$column=>$data], ['user_id' => $this->auth['id']]);
+            AdminUserSetting::create()->update([$column=>$data], ['user_id' => $this->auth['id']]);
 
             return $this->writeJson(Status::CODE_OK, Status::$msg[Status::CODE_OK]);
 
@@ -846,14 +793,14 @@ class UserCenter   extends FrontUserController{
         if (!$res) {
             return $this->writeJson(Status::CODE_W_FORMAT_PASS, Status::$msg[Status::CODE_W_FORMAT_PASS]);
         }
-        $phoneCode = AdminUserPhonecode::getInstance()->getLastCodeByMobile($this->params['mobile']);
+        $phoneCode = AdminUserPhonecode::create()->getLastCodeByMobile($this->params['mobile']);
 
         if (!$phoneCode || $phoneCode->status != 0 || $phoneCode->code != $this->params['phone_code']) {
 
             return $this->writeJson(Status::CODE_W_PHONE_CODE, Status::$msg[Status::CODE_W_PHONE_CODE]);
 
         }
-        $user = AdminUser::getInstance()->find($this->auth['id']);
+        $user = AdminUser::create()->where('id', $this->auth['id'])->get();
         $password_hash = PasswordTool::getInstance()->generatePassword($password);
 
         $user->password_hash = $password_hash;
@@ -899,38 +846,38 @@ class UserCenter   extends FrontUserController{
 
         $uid = $this->auth['id'];
         //帖子
-        $posts = AdminUserOperate::getInstance()->func(function ($builder) use($uid){
+        $posts = AdminUserOperate::create()->func(function ($builder) use($uid){
             $builder->raw('select o.created_at, o.item_type, o.user_id, p.id, p.title from `admin_user_operates` o left join `admin_user_posts` p on o.author_id=p.user_id where o.item_id=p.id and o.type=? and o.item_type=?   and o.author_id=? ',[1, 1, $uid]);
             return true;
         });
         if ($posts) {
             foreach ($posts as $k=>$post) {
-                $user = AdminUser::getInstance()->find($post['user_id']);
+                $user = AdminUser::create()->where('id', $post['user_id'])->get();
                 $posts[$k]['user_info'] = ['id' => $user->id, 'nickname' => $user->nickname, 'photo' => $user->photo];
             }
         }
         //帖子评论
-        $post_comments = AdminUserOperate::getInstance()->func(function ($builder) use($uid){
+        $post_comments = AdminUserOperate::create()->func(function ($builder) use($uid){
             $builder->raw('select m.*, o.user_id, o.created_at, o.item_type from `admin_user_operates` o left join (select c.id, c.content, p.title from `admin_user_post_comments` c left join `admin_user_posts` p on  c.post_id=p.id) m on o.item_id=m.id where o.type=? and o.item_type=? and o.author_id=?',[1, 2, $uid]);
             return true;
         });
         if ($post_comments) {
             foreach ($post_comments as $kc=>$comment) {
-                $user = AdminUser::getInstance()->find($comment['user_id']);
+                $user = AdminUser::create()->where('id', $comment['user_id'])->get();
 
                 $post_comments[$kc]['user_info'] = ['id' => $user->id, 'nickname' => $user->nickname, 'photo' => $user->nickname];
             }
         }
 
         //资讯评论
-        $information_comments = AdminUserOperate::getInstance()->func(function ($builder) use($uid){
+        $information_comments = AdminUserOperate::create()->func(function ($builder) use($uid){
             $builder->raw('select m.*, o.user_id, o.created_at, o.item_type from `admin_user_operates` o left join (select c.id, c.content, i.title from `admin_information_comments` c left join `admin_information` i on  c.information_id=i.id) m on o.item_id=m.id where o.type=? and o.item_type=? and o.author_id=?',[1, 4, $uid]);
             return true;
         });
 
         if ($information_comments) {
             foreach ($information_comments as $ic=>$icomment) {
-                $user = AdminUser::getInstance()->find($icomment['user_id']);
+                $user = AdminUser::create()->where('id', $icomment['user_id'])->get();
 
                 $information_comments[$kc]['user_info'] = ['id' => $user->id, 'nickname' => $user->nickname, 'photo' => $user->nickname];
             }
@@ -948,7 +895,7 @@ class UserCenter   extends FrontUserController{
     {
         $page = $this->params['page'] ?: 1;
         $size = $this->params['size'] ?: 10;
-        $res = AdminUserFoulCenter::getInstance()->field(['id', 'reason', 'info', 'created_at', 'item_type', 'item_id', 'item_punish_type', 'user_punish_type'])
+        $res = AdminUserFoulCenter::create()->field(['id', 'reason', 'info', 'created_at', 'item_type', 'item_id', 'item_punish_type', 'user_punish_type'])
             ->where('user_id', $this->auth['id'])->order('created_at', 'DESC')
             ->limit(($page - 1) * $size, $size)->withTotalCount();
         $list = $res->all(null);
@@ -967,7 +914,7 @@ class UserCenter   extends FrontUserController{
     {
         $page = $this->params['page'] ?: 1;
         $size = $this->params['size'] ?: 10;
-        $operates = AdminUserOperate::getInstance()->where('author_id', $this->auth['id'])->where('type', 3)->where('item_type', [1,2,4,5], 'in')->getLimit($page, $size);
+        $operates = AdminUserOperate::create()->where('author_id', $this->auth['id'])->where('type', 3)->where('item_type', [1,2,4,5], 'in')->getLimit($page, $size);
         $list = $operates->all(null);
         $total = $operates->lastQueryResult()->getTotalCount();
         if ($list) {
@@ -980,7 +927,7 @@ class UserCenter   extends FrontUserController{
                 } else {
                     //1帖子 2帖子评论 3资讯 4资讯评论 5直播间发言
                     if ($item['item_type'] == 1) { //帖子
-                        if ($post = AdminUserPost::getInstance()->where('id', $item['item_id'])->get()) {
+                        if ($post = AdminUserPost::create()->where('id', $item['item_id'])->get()) {
                             $data['item_type'] = 1;
                             $data['item_id'] = $post->id;
                             $data['post_title'] = $post->title;
@@ -994,7 +941,7 @@ class UserCenter   extends FrontUserController{
                             continue;
                         }
                     } else if ($item['item_type'] == 2) {
-                        if ($post_comment = AdminPostComment::getInstance()->where('id', $item['item_id'])->get()) {
+                        if ($post_comment = AdminPostComment::create()->where('id', $item['item_id'])->get()) {
                             $data['item_type'] = 2;
                             $data['item_id'] = $post_comment->id;
                             $data['item_content'] = $post_comment->comment;
@@ -1007,7 +954,7 @@ class UserCenter   extends FrontUserController{
                         }
 
                     } else if ($item['item_type'] == 4) {
-                        if ($information_comment = AdminInformationComment::getInstance()->where('id', $item['item_id'])->get()) {
+                        if ($information_comment = AdminInformationComment::create()->where('id', $item['item_id'])->get()) {
                             $data['item_type'] = 4;
                             $data['item_id'] = $information_comment->id;
                             $data['item_content'] = $information_comment->content;
@@ -1019,7 +966,7 @@ class UserCenter   extends FrontUserController{
                             continue;
                         }
                     } else if ($item['item_type'] == 5) {
-                        if ($chat_message = ChatHistory::getInstance()->where('id', $item['item_id'])->get()) {
+                        if ($chat_message = ChatHistory::create()->where('id', $item['item_id'])->get()) {
                             $data['item_type'] = 5;
                             $data['item_id'] = $chat_message->id;
                             $data['item_content'] = $chat_message->comment;
@@ -1058,18 +1005,18 @@ class UserCenter   extends FrontUserController{
     public function foulItemInfo()
     {
         $id = $this->params['operate_id'];
-        if (!$operate = AdminUserFoulCenter::getInstance()->where('id', $id)->get()) {
+        if (!$operate = AdminUserFoulCenter::create()->where('id', $id)->get()) {
             return $this->writeJson(Status::CODE_W_PARAM, Status::$msg[Status::CODE_W_PARAM]);
 
         }
         $data = [];
-        if ($operate->item_type == 1 && $post = AdminUserPost::getInstance()->where('id', $operate->item_id)->field(['id', 'content'])->get()) {
+        if ($operate->item_type == 1 && $post = AdminUserPost::create()->where('id', $operate->item_id)->field(['id', 'content'])->get()) {
             $data = ['item_id' => $id, 'item_type' => 1, 'content' => base64_decode($post->content), 'title' => $post->title];
-        } else if ($operate->item_type == 2 && $post_comment = AdminPostComment::getInstance()->where('id', $id)->field(['id', 'content'])->get()) {
+        } else if ($operate->item_type == 2 && $post_comment = AdminPostComment::create()->where('id', $id)->field(['id', 'content'])->get()) {
             $data = ['item_id' => $id, 'item_type' => 2, 'content' => $post_comment->content];
-        } else if ($operate->item_type == 4 && $information_comment = AdminInformationComment::getInstance()->where('id', $id)->field(['id', 'content'])->get()) {
+        } else if ($operate->item_type == 4 && $information_comment = AdminInformationComment::create()->where('id', $id)->field(['id', 'content'])->get()) {
             $data = ['item_id' => $id, 'item_type' => 3, 'content' => $information_comment->content];
-        } else if ($operate->item_type== 5 && $chat_message = ChatHistory::getInstance()->where('id', $id)->get()) {
+        } else if ($operate->item_type== 5 && $chat_message = ChatHistory::create()->where('id', $id)->get()) {
             $data = ['item_id' => $id, 'item_type' => 5, 'content' => $chat_message->content];
         }
         $data['info'] = $operate->info;
@@ -1152,12 +1099,12 @@ class UserCenter   extends FrontUserController{
             if ($task['status'] != AdminUserSerialPoint::TASK_STATUS_NORMAL) {
                 continue;
             }
-            $done_times = AdminUserSerialPoint::getInstance()->where('task_id', $task['id'])->where('created_at', date('Y-m-d'))->where('user_id', $this->auth['id'])->count();
+            $done_times = AdminUserSerialPoint::create()->where('task_id', $task['id'])->where('created_at', date('Y-m-d'))->where('user_id', $this->auth['id'])->count();
             $user_tasks[$k]['done_times'] = $done_times;
         }
 
 
-        $user_info = AdminUser::getInstance()->field(['id', 'photo', 'level', 'is_offical', 'level', 'point', 'third_wx_unionid'])->where('id', $this->auth['id'])->get();
+        $user_info = AdminUser::create()->field(['id', 'photo', 'level', 'is_offical', 'level', 'point', 'third_wx_unionid'])->where('id', $this->auth['id'])->get();
 
         $return = ['user_info' => $user_info, 'task_list' => $user_tasks];
         $return['d_value'] = AppFunc::getPointsToNextLevel($user_info);
@@ -1203,7 +1150,7 @@ class UserCenter   extends FrontUserController{
             return $this->writeJson(Status::CODE_W_PARAM, Status::$msg[Status::CODE_W_PARAM]);
 
         }
-        $user_did_task = AdminUserSerialPoint::getInstance()->where('user_id', $this->auth['id'])->where('task_id', $task_id)->where('created_at', date('Y-m-d'))->count();
+        $user_did_task = AdminUserSerialPoint::create()->where('user_id', $this->auth['id'])->where('task_id', $task_id)->where('created_at', date('Y-m-d'))->count();
         if ($user_task['times_per_day'] <= $user_did_task) {
             return $this->writeJson(Status::CODE_TASK_LIMIT, Status::$msg[Status::CODE_TASK_LIMIT]);
 
@@ -1263,7 +1210,7 @@ class UserCenter   extends FrontUserController{
     {
         $page = !empty($this->params['page']) ? (int)$this->params['page'] : 1;
         $size = !empty($this->params['size']) ? (int)$this->params['size'] : 10;
-        $model = AdminUserSerialPoint::getInstance()->where('user_id', $this->auth['id'])
+        $model = AdminUserSerialPoint::create()->where('user_id', $this->auth['id'])
             ->field(['id', 'task_name', 'type', 'point', 'created_at'])
             ->getLimit($page, $size);
         $list = $model->all(null);
@@ -1285,7 +1232,7 @@ class UserCenter   extends FrontUserController{
 
         $uid = $this->auth['id'];
         if ($type == 1) {//删除帖子
-            if (!$post = AdminUserPost::getInstance()->where('id', $item_id)->where('user_id', $uid)->get()) {
+            if (!$post = AdminUserPost::create()->where('id', $item_id)->where('user_id', $uid)->get()) {
                 return $this->writeJson(Status::CODE_W_PARAM, Status::$msg[Status::CODE_W_PARAM]);
             } else {
                 $post->status = AdminUserPost::NEW_STATUS_DELETED;
@@ -1294,7 +1241,7 @@ class UserCenter   extends FrontUserController{
 
             }
         } else if ($type == 2) {//帖子评论
-            if (!$post_comment = AdminPostComment::getInstance()->where('id', $item_id)->where('user_id', $uid)->get()) {
+            if (!$post_comment = AdminPostComment::create()->where('id', $item_id)->where('user_id', $uid)->get()) {
                 return $this->writeJson(Status::CODE_W_PARAM, Status::$msg[Status::CODE_W_PARAM]);
 
             } else {
@@ -1304,7 +1251,7 @@ class UserCenter   extends FrontUserController{
 
             }
         } else if ($type == 3) {
-            if (!$information_comment = AdminInformationComment::getInstance()->where('id', $item_id)->where('user_id', $uid)->get()) {
+            if (!$information_comment = AdminInformationComment::create()->where('id', $item_id)->where('user_id', $uid)->get()) {
                 return $this->writeJson(Status::CODE_W_PARAM, Status::$msg[Status::CODE_W_PARAM]);
 
             } else {
@@ -1344,7 +1291,7 @@ class UserCenter   extends FrontUserController{
             $data['img'] = $this->params['img'];
 
         }
-        if (AdminUserFeedBack::getInstance()->insert($data)) {
+        if (AdminUserFeedBack::create($data)->save()) {
             return $this->writeJson(Status::CODE_OK, Status::$msg[Status::CODE_OK]);
 
         } else {

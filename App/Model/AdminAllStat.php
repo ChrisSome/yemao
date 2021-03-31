@@ -2,9 +2,9 @@
 
 namespace App\Model;
 
-use App\Base\BaseModel;
+use EasySwoole\ORM\AbstractModel;
 
-class AdminAllStat extends BaseModel
+class AdminAllStat extends AbstractModel
 {
 
     protected $tableName = "admin_all_stat";

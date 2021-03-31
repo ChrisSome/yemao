@@ -2,9 +2,9 @@
 
 namespace App\Model;
 
-use App\Base\BaseModel;
+use EasySwoole\ORM\AbstractModel;
 
-class AdminPlayerChangeClub extends BaseModel
+class AdminPlayerChangeClub extends AbstractModel
 {
 
     protected $tableName = "admin_player_change_club";

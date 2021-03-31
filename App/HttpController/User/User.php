@@ -8,8 +8,6 @@ use App\Base\FrontUserController;
 use App\Common\AppFunc;
 use App\lib\FrontService;
 use App\lib\PasswordTool;
-use App\Model\AdminInformation;
-use App\Model\AdminInformationComment;
 use App\Model\AdminInterestMatches;
 use App\Model\AdminMessage;
 use App\Model\AdminPostComment;
@@ -19,7 +17,6 @@ use App\Model\AdminUserOperate;
 use App\Model\AdminUserPost;
 use App\Task\SerialPointTask;
 use App\Task\UserOperateTask;
-use App\Utility\Log\Log;
 use App\Utility\Message\Status;
 use EasySwoole\EasySwoole\Task\TaskManager;
 use EasySwoole\Mysqli\QueryBuilder;
@@ -43,13 +40,6 @@ class User extends FrontUserController
     public $needCheckToken = true;
     public $isCheckSign = false;
 
-    /**
-     * 返回用户信息
-     */
-    public function info()
-    {
-        return $this->writeJson(Status::CODE_OK, 'ok', AdminUser::getInstance()->findOne($this->auth['id']));
-    }
 
 
     /**
@@ -98,7 +88,7 @@ class User extends FrontUserController
      */
     public function unBindWx()
     {
-        if (!$user = AdminUser::getInstance()->where('id', $this->auth['id'])->get()) {
+        if (!$user = AdminUser::create()->where('id', $this->auth['id'])->get()) {
             return $this->writeJson(Status::CODE_W_PARAM, Status::$msg[Status::CODE_W_PARAM]);
 
         } else {
@@ -139,7 +129,7 @@ class User extends FrontUserController
         if ($uid == $followUid) {
             return $this->writeJson(Status::CODE_WRONG_USER, Status::$msg[Status::CODE_WRONG_USER], 3);
         }
-        $user = AdminUser::getInstance()->field(['id', 'nickname', 'photo'])->get(['id'=>$followUid]);
+        $user = AdminUser::create()->field(['id', 'nickname', 'photo'])->get(['id'=>$followUid]);
         if (!$user || !$uid) {
             return $this->writeJson(Status::CODE_WRONG_USER, Status::$msg[Status::CODE_WRONG_USER], 3);
 
@@ -152,7 +142,7 @@ class User extends FrontUserController
             }
             $bool = AppFunc::addFollow($uid, $user->id);
 
-            if ($message = AdminMessage::getInstance()->where('user_id', $followUid)->where('item_id' , $followUid)->where('did_user_id', $this->auth['id'])->where('type', 4)->where('item_type', 5)->get()) {
+            if ($message = AdminMessage::create()->where('user_id', $followUid)->where('item_id' , $followUid)->where('did_user_id', $this->auth['id'])->where('type', 4)->where('item_type', 5)->get()) {
                 $message->status = AdminMessage::STATUS_UNREAD;
                 $message->created_at = date('Y-m-d H:i:s');
                 $message->update();
@@ -167,13 +157,13 @@ class User extends FrontUserController
                     'title' => '关注通知',
                     'did_user_id' => $this->auth['id']
                 ];
-                AdminMessage::getInstance()->insert($data);
+                AdminMessage::create($data)->save();
             }
 
         } else {
             $bool = AppFunc::delFollow($uid, $user->id);
             //取关删除该条消息
-            if ($message = AdminMessage::getInstance()->where('user_id', $followUid)->where('item_id' , $followUid)->where('did_user_id', $this->auth['id'])->where('type', 4)->where('item_type', 5)->get()) {
+            if ($message = AdminMessage::create()->where('user_id', $followUid)->where('item_id' , $followUid)->where('did_user_id', $this->auth['id'])->where('type', 4)->where('item_type', 5)->get()) {
                 $message->status = AdminMessage::STATUS_DEL;
                 $message->update();
             }
@@ -227,7 +217,7 @@ class User extends FrontUserController
         $item_id = $this->params['item_id'];
         $type = $this->params['type'];
         $item_type = $this->params['item_type'];
-        if ($operate = AdminUserOperate::getInstance()->where('item_id', $this->params['item_id'])->where('item_type', $this->params['item_type'])->where('user_id', $this->auth['id'])->where('type', $this->params['type'])->get()) {
+        if ($operate = AdminUserOperate::create()->where('item_id', $this->params['item_id'])->where('item_type', $this->params['item_type'])->where('user_id', $this->auth['id'])->where('type', $this->params['type'])->get()) {
             if ($this->params['is_cancel'] == $operate->is_cancel) {
                 return $this->writeJson(Status::CODE_OK, Status::$msg[Status::CODE_OK]);
             } else {
@@ -245,7 +235,7 @@ class User extends FrontUserController
                 'item_id' => $this->params['item_id'] ?: 0,
                 'author_id' => $this->params['author_id'] ?: 0
             ];
-            AdminUserOperate::getInstance()->insert($data);
+            AdminUserOperate::create($data)->save();
         }
         $author_id = $this->params['author_id'];
         $uid = $this->auth['id'];
@@ -277,7 +267,7 @@ class User extends FrontUserController
         $size = $params['size'] ?: 10;
 
         $model = AdminPostComment::create();
-        $query = $model->where('t_u_id', $this->auth['id'])->where('status', AdminPostComment::STATUS_DEL, '<>')->orderBy('created_at', 'DESC');
+        $query = $model->where('t_u_id', $this->auth['id'])->where('status', AdminPostComment::STATUS_DEL, '<>')->order('created_at', 'DESC');
         $list = $query->getAll($page, $size)->all(null);
 
         if ($list) {
@@ -338,7 +328,7 @@ class User extends FrontUserController
         $uid = $this->auth['id'];
         $page = $this->params['page'] ?: 1;
         $size = $this->params['size'] ?: 10;
-        $model = AdminMessage::getInstance()->where('status', AdminMessage::STATUS_DEL, '<>')->where('user_id', $uid)->orderBy('status', 'ASC')->getLimit($page, $size);
+        $model = AdminMessage::create()->where('status', AdminMessage::STATUS_DEL, '<>')->where('user_id', $uid)->order('status', 'ASC')->getLimit($page, $size);
         $list = $model->all(null);
         $total = $model->lastQueryResult()->getTotalCount();
         $returnData = ['data' => $list, 'count' => $total];
@@ -360,7 +350,7 @@ class User extends FrontUserController
         }
         $mid = $this->params['mid'];
 
-        $res = AdminMessage::getInstance()->get($mid);
+        $res = AdminMessage::create()->get($mid);
         $returnData['title'] = $res['title'];
         $returnData['content'] = $res['content'];
         $returnData['created_at'] = $res['created_at'];
@@ -380,7 +370,7 @@ class User extends FrontUserController
             return $this->writeJson(Status::CODE_LOGIN_ERR, Status::$msg[Status::CODE_LOGIN_ERR]);
         }
         $type = !empty($this->params['type']) ? (int)$this->params['type'] : 1; //默认为足球 1：足球 2篮球
-        $uComs = AdminUserInterestCompetition::getInstance()->where('user_id', $this->auth['id'])->where('type', $type)->get();
+        $uComs = AdminUserInterestCompetition::create()->where('user_id', $this->auth['id'])->where('type', $type)->get();
         if ($uComs) {
             $uComs->competition_ids = $this->params['competition_id'];
             $bool = $uComs->update();
@@ -390,7 +380,7 @@ class User extends FrontUserController
                 'user_id' => $this->auth['id'],
                 'type' => $type
             ];
-            $bool = AdminUserInterestCompetition::getInstance()->insert($data);
+            $bool = AdminUserInterestCompetition::create($data)->save();
         }
 
         if (!$bool) {
@@ -468,7 +458,7 @@ class User extends FrontUserController
      */
     public function setPassword()
     {
-        $user = AdminUser::getInstance()->find($this->auth['id']);
+        $user = AdminUser::create()->where('id', $this->auth['id'])->get();
         if (!$user || $user->status == 0) {
             return $this->writeJson(Status::CODE_W_STATUS, Status::$msg[Status::CODE_W_STATUS]);
 
@@ -522,7 +512,7 @@ class User extends FrontUserController
             return $this->writeJson(Status::CODE_W_PARAM, $validate->getError()->__toString());
         }
 
-        $info = AdminUserPost::getInstance()->find($id);
+        $info = AdminUserPost::create()->where('id', $id)->get();
         if (!$info) {
             return $this->writeJson(Status::CODE_WRONG_RES, '对应帖子不存在');
         }
@@ -534,7 +524,7 @@ class User extends FrontUserController
         $parent_id = isset($this->params['parent_id']) ? $this->params['parent_id'] : 0;
         $top_comment_id = isset($this->params['top_comment_id']) ? $this->params['top_comment_id'] : 0; //一级回复的id
         if ($parent_id) {
-            $parentComment = AdminPostComment::getInstance()->get(['id'=>$parent_id]);
+            $parentComment = AdminPostComment::create()->get(['id'=>$parent_id]);
             if (!$parentComment || $parentComment['status'] != AdminPostComment::STATUS_NORMAL) {
                 return $this->writeJson(Status::CODE_WRONG_RES, '原始评论参数不正确');
             }
@@ -550,8 +540,8 @@ class User extends FrontUserController
         ];
 
         //插入一条评论
-        $insertId = AdminPostComment::getInstance()->insert($taskData);
-        $new_comment = AdminPostComment::getInstance()->where('id', $insertId)->get();
+        $insertId = AdminPostComment::create($taskData)->save();
+        $new_comment = AdminPostComment::create()->where('id', $insertId)->get();
         $format_comment = FrontService::handComments([$new_comment], $this->auth['id'])[0];
 
         if ($top_comment_id) {
@@ -565,11 +555,11 @@ class User extends FrontUserController
         }
 
         if ($parent_id) {
-            $author_id = AdminPostComment::getInstance()->where('id', $parent_id)->get()->user_id;
+            $author_id = AdminPostComment::create()->where('id', $parent_id)->get()->user_id;
             $item_type = 2;
             $item_id = $insertId;
         } else {
-            $author_id = AdminUserPost::getInstance()->where('id', $this->params['post_id'])->get()->user_id;
+            $author_id = AdminUserPost::create()->where('id', $this->params['post_id'])->get()->user_id;
             $item_type = 1;
             $item_id = $insertId;
         }
@@ -591,7 +581,7 @@ class User extends FrontUserController
                 'title' => '帖子回复通知',
                 'did_user_id' => $this->auth['id'],
             ];
-            AdminMessage::getInstance()->insert($data);
+            AdminMessage::create($data)->save();
         }
 
         //积分任务
@@ -612,7 +602,7 @@ class User extends FrontUserController
     {
         $uid = $this->auth['id'];
         $bool = false;
-        if ($user = AdminUser::getInstance()->where('id', $uid)->get()) {
+        if ($user = AdminUser::create()->where('id', $uid)->get()) {
             if (in_array($user->status, [AdminUser::STATUS_NORMAL, AdminUser::STATUS_REPORTED])) {
                 $bool = true;
             } else {

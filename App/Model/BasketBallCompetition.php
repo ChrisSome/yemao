@@ -2,10 +2,10 @@
 
 namespace App\Model;
 
-use App\Base\BaseModel;
 use EasySwoole\Mysqli\QueryBuilder;
+use EasySwoole\ORM\AbstractModel;
 
-class BasketBallCompetition extends BaseModel
+class BasketBallCompetition extends AbstractModel
 {
     protected $tableName = "basketball_competition_list";
 

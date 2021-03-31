@@ -2,9 +2,9 @@
 
 namespace App\Model;
 
-use App\Base\BaseModel;
+use EasySwoole\ORM\AbstractModel;
 
-class AdminAdvertisement  extends BaseModel{
+class AdminAdvertisement  extends AbstractModel{
 
     const STATUS_NORMAL = 1;
     protected $tableName  = "admin_advertisement";

@@ -1,9 +1,8 @@
 <?php
 namespace App\lib;
 
-use App\Base\BaseModel;
-use App\Utility\Log\Log;
 use EasySwoole\Component\Singleton;
+use EasySwoole\ORM\AbstractModel;
 
 /**
  * 通用工具类
@@ -38,7 +37,7 @@ class Utils {
 
 
     /**
-     * @param BaseModel $model
+     * @param AbstractModel $model
      * @param string $where
      * @param null $bind
      * @param string $fields
@@ -50,7 +49,7 @@ class Utils {
      * @return array|bool|mixed
      * @throws \Throwable
      */
-    public static function queryHandler(BaseModel $model, string $where, $bind = null,
+    public static function queryHandler(AbstractModel $model, string $where, $bind = null,
                                         string $fields = '*', bool $singleRow = true, $orderOrGroup = null, $kv = null,
                                         int $page = 0, int $size = 0)
     {

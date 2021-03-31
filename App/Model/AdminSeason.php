@@ -2,9 +2,9 @@
 
 namespace App\Model;
 
-use App\Base\BaseModel;
+use EasySwoole\ORM\AbstractModel;
 
-class AdminSeason extends BaseModel
+class AdminSeason extends AbstractModel
 {
 
     protected $tableName = "admin_season_list";

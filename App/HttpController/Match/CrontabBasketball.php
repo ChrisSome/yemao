@@ -90,7 +90,7 @@ class CrontabBasketball extends FrontUserController
                     $res->update();
                 } else {
                     $item['category_id'] = $data['id'];
-                    BasketballCategory::create()->insert($item);
+                    BasketballCategory::create($item)->save();
                 }
 
             }
@@ -144,7 +144,7 @@ class CrontabBasketball extends FrontUserController
                         'updated_at' => $data['updated_at'],
                         'short_name_en' => $data['short_name_en'],
                     ];
-                    BasketBallCompetition::create()->insert($insert);
+                    BasketBallCompetition::create($insert)->save();
                 }
 
             }
@@ -177,7 +177,7 @@ class CrontabBasketball extends FrontUserController
 
         } else {
             foreach ($decodeDatas as $data) {
-                if ($team = BasketballTeam::getInstance()->where('team_id', $data['id'])->get()) {
+                if ($team = BasketballTeam::create()->where('team_id', $data['id'])->get()) {
                     $team->team_id = $data['id'];
                     $team->competition_id = $data['competition_id'];
                     $team->conference_id = $data['conference_id'];
@@ -205,7 +205,7 @@ class CrontabBasketball extends FrontUserController
                         'logo' => $data['logo'],
                         'updated_at' => $data['updated_at'],
                     ];
-                    BasketballTeam::getInstance()->insert($insert);
+                    BasketballTeam::create($insert)->save();
                 }
             }
         }
@@ -237,7 +237,7 @@ class CrontabBasketball extends FrontUserController
 
         } else {
             foreach ($decodeDatas as $data) {
-                if ($team = BasketballLineUp::getInstance()->where('team_id', $data['id'])->get()) {
+                if ($team = BasketballLineUp::create()->where('team_id', $data['id'])->get()) {
                     $team->team = json_encode($data['team']);
                     $team->squad = json_encode($data['squad']);
                     $team->updated_at = (int)$data['updated_at'];
@@ -250,7 +250,7 @@ class CrontabBasketball extends FrontUserController
                         'updated_at' => (int)$data['updated_at'],
 
                     ];
-                    BasketballLineUp::getInstance()->insert($insert);
+                    BasketballLineUp::create($insert)->save();
                 }
             }
         }
@@ -280,7 +280,7 @@ class CrontabBasketball extends FrontUserController
         } else {
             foreach ($decodeDatas as $data) {
 
-                if ($player = BasketballPlayer::getInstance()->where('player_id', $data['id'])->get()) {
+                if ($player = BasketballPlayer::create()->where('player_id', $data['id'])->get()) {
                     $player->name_zh = $data['name_zh'];
                     $player->short_name_zh = $data['short_name_zh'];
                     $player->name_en = $data['name_en'];
@@ -324,7 +324,7 @@ class CrontabBasketball extends FrontUserController
                         'updated_at' => $data['updated_at'],
 
                     ];
-                    BasketballPlayer::getInstance()->insert($insert);
+                    BasketballPlayer::create($insert)->save();
                 }
             }
         }
@@ -358,7 +358,7 @@ class CrontabBasketball extends FrontUserController
         } else {
             foreach ($decodeDatas as $data) {
 
-                if ($player = BasketballPlayerHonor::getInstance()->where('player_id', $data['id'])->get()) {
+                if ($player = BasketballPlayerHonor::create()->where('player_id', $data['id'])->get()) {
                     $player->player = json_encode($data['name_zh']);
                     $player->honors = json_encode($data['honors']);
                     $player->updated_at = $data['updated_at'];
@@ -372,7 +372,7 @@ class CrontabBasketball extends FrontUserController
                         'updated_at' => $data['updated_at'],
 
                     ];
-                    BasketballPlayerHonor::getInstance()->insert($insert);
+                    BasketballPlayerHonor::create($insert)->save();
                 }
             }
         }
@@ -404,13 +404,13 @@ class CrontabBasketball extends FrontUserController
         $homeTeamIds = array_column($decodeDatas, 'home_team_id');
         $awayTeamIds = array_column($decodeDatas, 'away_team_id');
         $teamIds = array_unique(array_merge($homeTeamIds, $awayTeamIds));
-        $teams = BasketballTeam::getInstance()->where('team_id', $teamIds, 'in')->all();
+        $teams = BasketballTeam::create()->where('team_id', $teamIds, 'in')->all();
         $sortTeams = $sortCompetition = [];
         array_walk($teams, function($v, $k) use(&$sortTeams) {
             $sortTeams[$v['team_id']] = $v;
         });
         $competitionsIds = array_column($decodeDatas, 'competition_id');
-        $competitionArr = BasketBallCompetition::getInstance()->where('competition_id', $competitionsIds, 'in')->all();
+        $competitionArr = BasketBallCompetition::create()->where('competition_id', $competitionsIds, 'in')->all();
         array_walk($competitionArr, function($cv, $ck) use(&$sortCompetition) {
             $sortCompetition[$cv['competition_id']] = $cv;
         });
@@ -424,7 +424,7 @@ class CrontabBasketball extends FrontUserController
                 $away_team = $sortTeams[$data['away_team_id']];
                 $competition = isset($sortCompetition[$data['competition_id']]) ? $sortCompetition[$data['competition_id']] : [];
 
-                if ($match = BasketballMatch::getInstance()->where('match_id', $data['id'])->get()) {
+                if ($match = BasketballMatch::create()->where('match_id', $data['id'])->get()) {
                     $match->status_id = (int)$data['status_id'];
                     $match->match_time = (int)$data['match_time'];
                     $match->note = $data['note'];
@@ -463,10 +463,10 @@ class CrontabBasketball extends FrontUserController
                         'away_team_logo' => isset($away_team->logo) ? $away_team->logo : '',
                         'competition_name' => isset($competition->short_name_zh) ? $competition->short_name_zh : '',
                     ];
-                    BasketballMatch::getInstance()->insert($insert);
+                    BasketballMatch::create($insert)->save();
                 }
 
-                if ($seasonMatch = BasketballMatchSeason::getInstance()->where('match_id', $data['id'])->get()) {
+                if ($seasonMatch = BasketballMatchSeason::create()->where('match_id', $data['id'])->get()) {
                     $seasonMatch->status_id = (int)$data['status_id'];
                     $seasonMatch->match_time = (int)$data['match_time'];
                     $seasonMatch->note = $data['note'];
@@ -480,7 +480,7 @@ class CrontabBasketball extends FrontUserController
                     $seasonMatch->away_team_logo = isset($away_team->logo) ? $away_team->logo : '';
                     $seasonMatch->update();
                 } else {
-                    if (isset($insert)) BasketballMatchSeason::getInstance()->insert($insert);
+                    if (isset($insert)) BasketballMatchSeason::create($insert)->save();
                 }
             }
         }
@@ -523,7 +523,7 @@ class CrontabBasketball extends FrontUserController
         } else {
             foreach ($decodeDatas as $data) {
 
-                if ($honor = BasketballHonor::getInstance()->where('honor_id', $data['id'])->get()) {
+                if ($honor = BasketballHonor::create()->where('honor_id', $data['id'])->get()) {
                     $honor->title_zh = $data['title_zh'];
                     $honor->updated_at = $data['updated_at'];
                     $honor->logo = $data['logo'];
@@ -535,7 +535,7 @@ class CrontabBasketball extends FrontUserController
                         'updated_at' => $data['updated_at'],
                         'logo' => $data['logo'],
                     ];
-                    BasketballHonor::getInstance()->insert($insert);
+                    BasketballHonor::create($insert)->save();
                 }
             }
         }
@@ -564,7 +564,7 @@ class CrontabBasketball extends FrontUserController
 
         } else {
             foreach ($decodeDatas as $data) {
-                if ($season = BasketballSeasonList::getInstance()->where('season_id', $data['id'])->get()) {
+                if ($season = BasketballSeasonList::create()->where('season_id', $data['id'])->get()) {
                     $season->updated_at = $data['updated_at'];
                     $season->competition_id = $data['competition_id'];
                     $season->year = $data['year'];
@@ -582,7 +582,7 @@ class CrontabBasketball extends FrontUserController
                         'is_current' => $data['is_current'],
                         'season_id' => $data['id'],
                     ];
-                    BasketballSeasonList::getInstance()->insert($insert);
+                    BasketballSeasonList::create($insert)->save();
                 }
             }
         }
@@ -594,7 +594,7 @@ class CrontabBasketball extends FrontUserController
     public function getSeasonAllStatsDetail()
     {
 
-        $seasonList = BasketballSeasonList::getInstance()->field(['season_id'])->where('has_player_stats=1 or has_team_stats=1')->where('is_current', 1)->all();
+        $seasonList = BasketballSeasonList::create()->field(['season_id'])->where('has_player_stats=1 or has_team_stats=1')->where('is_current', 1)->all();
         foreach ($seasonList as $item) {
             $url = sprintf($this->seasonAllStatsDetail, $this->user, $this->secret, $item['season_id']);
             $res = Tool::getInstance()->postApi($url);
@@ -604,12 +604,12 @@ class CrontabBasketball extends FrontUserController
             $data['team_stats'] = json_encode($decodeDatas['team_stats']);
             $data['player_stats'] = json_encode($decodeDatas['player_stats']);
             $data['season_id'] = $item['season_id'];
-            if ($res = BasketballSeasonAllStatsDetail::getInstance()->where('season_id', $item['season_id'])->get()) {
+            if ($res = BasketballSeasonAllStatsDetail::create()->where('season_id', $item['season_id'])->get()) {
                 $res->team_stats = json_encode($decodeDatas['team_stats']);
                 $res->player_stats = json_encode($decodeDatas['player_stats']);
                 $res->update();
             } else {
-                BasketballSeasonAllStatsDetail::getInstance()->insert($data);
+                BasketballSeasonAllStatsDetail::create($data)->save();
             }
 
         }
@@ -619,7 +619,7 @@ class CrontabBasketball extends FrontUserController
     //赛季比赛列表
     public function seasonMatch()
     {
-        $seasonList = BasketballSeasonList::getInstance()->where('is_current', 1)->all();
+        $seasonList = BasketballSeasonList::create()->where('is_current', 1)->all();
         //需要获取每个赛事最新的赛季id
         foreach ($seasonList as $item) {
             $url = sprintf($this->matchSeason, $this->user, $this->secret, $item['season_id']);
@@ -629,7 +629,7 @@ class CrontabBasketball extends FrontUserController
                 continue;
             }
             foreach ($results as $data) {
-                if ($match = BasketballMatchSeason::getInstance()->where('match_id', $data['id'])->get()) {
+                if ($match = BasketballMatchSeason::create()->where('match_id', $data['id'])->get()) {
                     $match->status_id = (int)$data['status_id'];
                     $match->match_time = (int)$data['match_time'];
                     $match->note = $data['note'];
@@ -639,12 +639,6 @@ class CrontabBasketball extends FrontUserController
                     $match->coverage = json_encode($data['coverage']);
                     $match->update();
                 } else {
-                    $home_team = BasketballTeam::getInstance()->where('team_id', $data['home_team_id'])->get();
-                    $away_team = BasketballTeam::getInstance()->where('team_id', $data['away_team_id'])->get();
-                    $competition = BasketBallCompetition::getInstance()->where('competition_id', $data['competition_id'])->get();
-                    if (!$home_team || !$away_team) {
-                        continue;
-                    }
                     $insert = [
                         'match_id' => (int)$data['id'],
                         'competition_id' => $data['competition_id'],
@@ -664,13 +658,8 @@ class CrontabBasketball extends FrontUserController
                         'venue_id' => (isset($data['venue_id'])) ? (int)$data['venue_id'] : 0,
                         'position' => isset($data['position']) ? json_encode($data['position']) : '',
                         'updated_at' => $data['updated_at'],
-                        'home_team_name' => isset($home_team->short_name_zh) ? $home_team->name_zh : $home_team->name_zh,
-                        'home_team_logo' => isset($home_team->logo) ? $home_team->logo : '',
-                        'away_team_name' => isset($away_team->short_name_zh) ? $away_team->name_zh : $away_team->name_zh,
-                        'away_team_logo' => isset($away_team->logo) ? $away_team->logo : '',
-                        'competition_name' => isset($competition->short_name_zh) ? $competition->short_name_zh : '',
                     ];
-                    BasketballMatchSeason::getInstance()->insert($insert);
+                    BasketballMatchSeason::create($insert)->save();
                 }
             }
 
@@ -683,7 +672,7 @@ class CrontabBasketball extends FrontUserController
     //赛季积分榜数据 ,每天一次
     public function seasonTable()
     {
-        $seasonList = BasketballSeasonList::getInstance()->where('is_current', 1)->all();
+        $seasonList = BasketballSeasonList::create()->where('is_current', 1)->all();
         foreach ($seasonList as $item) {
             $url = sprintf($this->seasonTable, $this->user, $this->secret, $item['season_id']);
             $res = Tool::getInstance()->postApi($url);
@@ -692,13 +681,13 @@ class CrontabBasketball extends FrontUserController
                 continue;
             }
             $selectSeason[] = $item['season_id'];
-            if ($tableSeason = BasketballSeasonTable::getInstance()->where('season_id', $item['season_id'])->get()) {
+            if ($tableSeason = BasketballSeasonTable::create()->where('season_id', $item['season_id'])->get()) {
                 $tableSeason->tables = json_encode($results['tables']);
                 $tableSeason->update();
             } else {
                 $insert['tables'] = json_encode($results['tables']);
                 $insert['season_id'] = $item['season_id'];
-                BasketballSeasonTable::getInstance()->insert($insert);
+                BasketballSeasonTable::create($insert)->save();
             }
 
         }
@@ -709,7 +698,7 @@ class CrontabBasketball extends FrontUserController
     public function squadList()
     {
 
-        $maxUpdatedId = BasketballSquadList::getInstance()->max('updated_at') + 1;
+        $maxUpdatedId = BasketballSquadList::create()->max('updated_at') + 1;
         $url = sprintf($this->squadList, $this->user, $this->secret, $maxUpdatedId);
         $res = Tool::getInstance()->postApi($url);
         $decodeDatas = json_decode($res, true);
@@ -717,7 +706,7 @@ class CrontabBasketball extends FrontUserController
 
         if (!$results) return $this->writeJson(Statuses::CODE_OK, 'no data');
         foreach ($results as $item) {
-            if ($squad = BasketballSquadList::getInstance()->where('team_id', $item['id'])->get()) {
+            if ($squad = BasketballSquadList::create()->where('team_id', $item['id'])->get()) {
                 $squad->squad = json_encode($item['squad']);
                 $squad->team = json_encode($item['team']);
                 $squad->updated_at = $item['updated_at'];
@@ -727,7 +716,7 @@ class CrontabBasketball extends FrontUserController
                 $insert['squad'] = json_encode($item['squad']);
                 $insert['team'] = json_encode($item['team']);
                 $insert['updated_at'] = $item['updated_at'];
-                BasketballSquadList::getInstance()->insert($insert);
+                BasketballSquadList::create($insert)->save();
             }
         }
     }
@@ -756,10 +745,10 @@ class CrontabBasketball extends FrontUserController
              */
             //无效比赛 跳过
 
-            if (!$match = BasketballMatch::getInstance()->where('match_id', $matchItem['id'])->get()) {
+            if (!$match = BasketballMatch::create()->where('match_id', $matchItem['id'])->get()) {
                 continue;
             }
-            if (BasketballMatchTlive::getInstance()->where('match_id', $matchItem['id'])->where('is_stop', 1)->get()) {
+            if (BasketballMatchTlive::create()->where('match_id', $matchItem['id'])->where('is_stop', 1)->get()) {
                 continue;
             }
             //| 状态码 |    描述
@@ -912,7 +901,7 @@ class CrontabBasketball extends FrontUserController
                         'match_trend' => json_encode($match_trend_info),
                     ];
 
-                    BasketballMatchTlive::create()->insert($insertData);
+                    BasketballMatchTlive::create($insertData)->save();
                 }
             }
 
@@ -939,13 +928,13 @@ class CrontabBasketball extends FrontUserController
         } else {
             $match_trend_info = $match_trend['results'];
         }
-        $match = BasketballMatch::getInstance()->where('match_id', $matchId)->get();
+        $match = BasketballMatch::create()->where('match_id', $matchId)->get();
 
         $match->home_scores = json_encode($result['score'][3]);
         $match->away_scores = json_encode($result['score'][4]);
         $match->status_id = $result['score'][1];
         $match->update();
-        if ($matchTlive = BasketballMatchTlive::getInstance()->where('match_id', $matchId)->get()) {
+        if ($matchTlive = BasketballMatchTlive::create()->where('match_id', $matchId)->get()) {
             $matchTlive->score = json_encode($result['score']);
             $matchTlive->stats = json_encode($result['stats']);
             $matchTlive->tlive = json_encode($result['tlive']);
@@ -961,7 +950,7 @@ class CrontabBasketball extends FrontUserController
                 'match_trend' => json_encode($match_trend_info),
                 'match_id' => $matchId,
             ];
-            BasketballMatchTlive::getInstance()->insert($insert);
+            BasketballMatchTlive::create($insert)->save();
         }
         return $this->writeJson(Status::CODE_WRONG_RES, Status::$msg[Status::CODE_WRONG_RES], 1);
     }
@@ -986,7 +975,7 @@ class CrontabBasketball extends FrontUserController
 
     public function getMatchListDiary()
     {
-        $maxUpdatedAt = BasketballMatch::getInstance()->max('updated_at');
+        $maxUpdatedAt = BasketballMatch::create()->max('updated_at');
         $url = sprintf($this->changedMatchList, $this->user, $this->secret, (int)$maxUpdatedAt);
         $res = Tool::getInstance()->postApi($url);
         $teams = json_decode($res, true);
@@ -1000,13 +989,13 @@ class CrontabBasketball extends FrontUserController
         $homeTeamIds = array_column($decodeDatas, 'home_team_id');
         $awayTeamIds = array_column($decodeDatas, 'away_team_id');
         $teamIds = array_unique(array_merge($homeTeamIds, $awayTeamIds));
-        $teams = BasketballTeam::getInstance()->where('team_id', $teamIds, 'in')->all();
+        $teams = BasketballTeam::create()->where('team_id', $teamIds, 'in')->all();
         $sortTeams = $sortCompetition = [];
         array_walk($teams, function($v, $k) use(&$sortTeams) {
             $sortTeams[$v['team_id']] = $v;
         });
         $competitionsIds = array_column($decodeDatas, 'competition_id');
-        $competitionArr = BasketBallCompetition::getInstance()->where('competition_id', $competitionsIds, 'in')->all();
+        $competitionArr = BasketBallCompetition::create()->where('competition_id', $competitionsIds, 'in')->all();
         array_walk($competitionArr, function($cv, $ck) use(&$sortCompetition) {
             $sortCompetition[$cv['competition_id']] = $cv;
         });
@@ -1020,7 +1009,7 @@ class CrontabBasketball extends FrontUserController
                 $away_team = $sortTeams[$data['away_team_id']];
                 $competition = isset($sortCompetition[$data['competition_id']]) ? $sortCompetition[$data['competition_id']] : [];
 
-                if ($match = BasketballMatch::getInstance()->where('match_id', $data['id'])->get()) {
+                if ($match = BasketballMatch::create()->where('match_id', $data['id'])->get()) {
                     $match->status_id = (int)$data['status_id'];
                     $match->match_time = (int)$data['match_time'];
                     $match->note = $data['note'];
@@ -1059,10 +1048,10 @@ class CrontabBasketball extends FrontUserController
                         'away_team_logo' => isset($away_team->logo) ? $away_team->logo : '',
                         'competition_name' => isset($competition->short_name_zh) ? $competition->short_name_zh : '',
                     ];
-                    BasketballMatch::getInstance()->insert($insert);
+                    BasketballMatch::create($insert)->save();
                 }
 
-                if ($seasonMatch = BasketballMatchSeason::getInstance()->where('match_id', $data['id'])->get()) {
+                if ($seasonMatch = BasketballMatchSeason::create()->where('match_id', $data['id'])->get()) {
                     $seasonMatch->status_id = (int)$data['status_id'];
                     $seasonMatch->match_time = (int)$data['match_time'];
                     $seasonMatch->note = $data['note'];
@@ -1076,7 +1065,7 @@ class CrontabBasketball extends FrontUserController
                     $seasonMatch->away_team_logo = isset($away_team->logo) ? $away_team->logo : '';
                     $seasonMatch->update();
                 } else {
-                    if (isset($insert)) BasketballMatchSeason::getInstance()->insert($insert);
+                    if (isset($insert)) BasketballMatchSeason::create($insert)->save();
                 }
             }
 
@@ -1114,7 +1103,7 @@ class CrontabBasketball extends FrontUserController
         $decodeDatas = $teams['results'];
         if (empty($decodeDatas)) return $this->writeJson(Statuses::CODE_OK, 'no data', $decodeDatas);
         foreach ($decodeDatas as $data) {
-            if (!$res = BasketballTeamHonorList::getInstance()->where('honor_id', $data['id'])->get()) {
+            if (!$res = BasketballTeamHonorList::create()->where('honor_id', $data['id'])->get()) {
                 $formatData = [
                     'team_id' => $data['team_id'],
                     'competition_id' => $data['competition_id'],
@@ -1123,7 +1112,7 @@ class CrontabBasketball extends FrontUserController
                     'updated_at' => $data['updated_at'],
                     'honor_id' => $data['id'],
                 ];
-                BasketballTeamHonorList::getInstance()->insert($formatData);
+                BasketballTeamHonorList::create($formatData)->save();
             } else {
                 $res->team_id = $data['team_id'];
                 $res->competition_id = $data['competition_id'];
@@ -1146,11 +1135,11 @@ class CrontabBasketball extends FrontUserController
 
         $seasonId = Cache::get('update-basketball-season-player-stats-seasonid');
         if ($seasonId) {
-            $seasons = BasketballSeasonList::getInstance()
+            $seasons = BasketballSeasonList::create()
                 ->where('season_id', $seasonId, '>')
                 ->where('has_player_stats', 1)->order('season_id', 'ASC')->all();
         } else {
-            $seasons = BasketballSeasonList::getInstance()
+            $seasons = BasketballSeasonList::create()
                 ->where('has_player_stats', 1)->order('season_id', 'ASC')->all();
         }
         if (!$seasons) {
@@ -1159,13 +1148,13 @@ class CrontabBasketball extends FrontUserController
         foreach ($seasons as $season) {
             $selectSeasonId = $season->season_id;
             Cache::set('update-season-player-stats-seasonid', $selectSeasonId, 60 * 60);
-            $seasonPlayerStats = BasketballSeasonAllStatsDetail::getInstance()->field(['season_id', 'player_stats'])->where('season_id', $selectSeasonId)->get();
+            $seasonPlayerStats = BasketballSeasonAllStatsDetail::create()->field(['season_id', 'player_stats'])->where('season_id', $selectSeasonId)->get();
 
             if (!$seasonPlayerStats) continue;
             $playerStats = json_decode($seasonPlayerStats->player_stats, true);
             foreach ($playerStats as $playerStat) {
                 $playerId = $playerStat['player_id'];
-                $playerSeason = BasketballPlayer::getInstance()->where('player_id', $playerId)->get();
+                $playerSeason = BasketballPlayer::create()->where('player_id', $playerId)->get();
 
                 if (!$playerSeason) continue;
                 $formatPlayerSeason = json_decode($playerSeason->seasons, true);

@@ -29,7 +29,7 @@ class CommentTask implements TaskInterface
     {
 
         //插入一条评论
-        $model = AdminPostComment::getInstance()->create($this->taskData);
+        $model = AdminPostComment::create()->create($this->taskData);
         $insertId = $model->save();
         if ($this->taskData['parent_id']) {
             AdminPostComment::create()->update([

@@ -4,17 +4,13 @@
  */
 namespace App\Model;
 
-use App\Base\BaseModel;
-use App\lib\Tool;
 use EasySwoole\Mysqli\QueryBuilder;
-use App\Utility\Log\Log;
-use think\db\Query;
+use EasySwoole\ORM\AbstractModel;
 
 
-class AdminPostComment extends BaseModel
+class AdminPostComment extends AbstractModel
 {
     protected $tableName = "admin_user_post_comments";
-    protected $relationT = "admin_user";
 
     const STATUS_NORMAL = 0;        //正常
     const STATUS_REPORTED = 1;       //被举报

@@ -2,9 +2,9 @@
 
 namespace App\Model;
 
-use App\Base\BaseModel;
+use EasySwoole\ORM\AbstractModel;
 
-class AdminUserInterestCompetition extends BaseModel
+class AdminUserInterestCompetition extends AbstractModel
 {
     const FOOTBALL_TYPE = 1;
     const BASKETBALL_TYPE = 2;

@@ -58,22 +58,22 @@ class UserOperateTask implements TaskInterface
         $is_cancel = $this->taskData['is_cancel'];
         $author_id = $this->taskData['author_id'];
         if ($item_type == 1) {
-            $model = AdminUserPost::getInstance();
+            $model = AdminUserPost::create();
             $status_report = AdminUserPost::NEW_STATUS_REPORTED;
         } else if ($item_type == 2) {
-            $model = AdminPostComment::getInstance();
+            $model = AdminPostComment::create();
             $status_report = AdminPostComment::STATUS_REPORTED;
 
         } else if ($item_type == 3) {
-            $model = AdminInformation::getInstance();
+            $model = AdminInformation::create();
             $status_report = AdminInformation::STATUS_REPORTED;
 
         } else if ($item_type == 4) {
-            $model = AdminInformationComment::getInstance();
+            $model = AdminInformationComment::create();
             $status_report = AdminInformationComment::STATUS_REPORTED;
 
         } else if ($item_type == 5) {
-            $model = AdminUser::getInstance();
+            $model = AdminUser::create();
             $status_report = AdminUser::STATUS_REPORTED;
         } else {
             return false;
@@ -84,7 +84,7 @@ class UserOperateTask implements TaskInterface
                 if (!$is_cancel) {
                     $model->update(['fabolus_number' => QueryBuilder::inc(1)], ['id' => $item_id]);
                     if ($author_id != $uid) {
-                        if ($message = AdminMessage::getInstance()->where('user_id',  $author_id)->where('type', 2)->where('item_type', $item_type)->where('item_id', $item_id)->where('did_user_id', $uid)->get()) {
+                        if ($message = AdminMessage::create()->where('user_id',  $author_id)->where('type', 2)->where('item_type', $item_type)->where('item_id', $item_id)->where('did_user_id', $uid)->get()) {
                             $message->status = AdminMessage::STATUS_UNREAD;
                             $message->created_at = date('Y-m-d H:i:s');
                             $message->update();
@@ -99,13 +99,13 @@ class UserOperateTask implements TaskInterface
                                 'title' => '点赞通知',
                                 'did_user_id' => $uid
                             ];
-                            AdminMessage::getInstance()->insert($data);
+                            AdminMessage::create($data)->save();
                         }
 
                     }
                 } else {
                     $model->update(['fabolus_number' => QueryBuilder::dec(1)], ['id' => $item_id]);
-                    if ($author_id != $uid && $message = AdminMessage::getInstance()->where('user_id',  $author_id)->where('type', 2)->where('item_type', $item_type)->where('item_id', $item_id)->where('did_user_id', $uid)->get()) {
+                    if ($author_id != $uid && $message = AdminMessage::create()->where('user_id',  $author_id)->where('type', 2)->where('item_type', $item_type)->where('item_id', $item_id)->where('did_user_id', $uid)->get()) {
                         $message->status = AdminMessage::STATUS_DEL;
                         $message->update();
                     }

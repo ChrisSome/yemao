@@ -1,12 +1,9 @@
 <?php
 
 namespace App\Model;
-use App\Base\BaseModel;
-use App\Base\FatherModel;
-use EasySwoole\Mysqli\QueryBuilder;
 use EasySwoole\ORM\AbstractModel;
 
-class SeasonMatchList  extends BaseModel
+class SeasonMatchList  extends AbstractModel
 {
     protected $tableName = "match_season_list";
 

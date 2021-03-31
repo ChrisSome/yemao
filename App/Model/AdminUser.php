@@ -2,12 +2,11 @@
 
 namespace App\Model;
 
-use App\Base\BaseModel;
 use App\lib\Tool;
-use App\Utility\Log\Log;
 use EasySwoole\Mysqli\QueryBuilder;
+use EasySwoole\ORM\AbstractModel;
 
-class AdminUser extends BaseModel
+class AdminUser extends AbstractModel
 {
     protected $tableName = "admin_user";
 
@@ -119,9 +118,9 @@ class AdminUser extends BaseModel
         $default = json_decode($recommandCompetitionId->sys_value, true);
         if (!$uid) return [$default, []];
         //用户关注赛事 与 比赛
-        $resMatch = AdminInterestMatches::getInstance()->where('uid', $uid)->where('type', AdminInterestMatches::FOOTBALL_TYPE)->get();
+        $resMatch = AdminInterestMatches::create()->where('uid', $uid)->where('type', AdminInterestMatches::FOOTBALL_TYPE)->get();
         $interestMatchArr = isset($resMatch->match_ids) ? json_decode($resMatch->match_ids, true) : [];
-        $resCompetition = AdminUserInterestCompetition::getInstance()->where('user_id', $uid)->where('type', AdminUserInterestCompetition::FOOTBALL_TYPE)->get();
+        $resCompetition = AdminUserInterestCompetition::create()->where('user_id', $uid)->where('type', AdminUserInterestCompetition::FOOTBALL_TYPE)->get();
         $userInterestCompetition = isset($resCompetition->competition_ids) ? json_decode($resCompetition->competition_ids, true) : [];
 
         if ($userInterestCompetition) {
@@ -144,9 +143,9 @@ class AdminUser extends BaseModel
         $default = json_decode($recommandCompetitionId->sys_value, true);
         if (!$uid) return [$default, []];
         //用户关注赛事 与 比赛
-        $resMatch = AdminInterestMatches::getInstance()->where('uid', $uid)->where('type', 2)->get();
+        $resMatch = AdminInterestMatches::create()->where('uid', $uid)->where('type', 2)->get();
         $interestMatchArr = isset($resMatch->match_ids) ? json_decode($resMatch->match_ids, true) : [];
-        $resCompetition = AdminUserInterestCompetition::getInstance()->where('user_id', $uid)->where('type', 2)->get();
+        $resCompetition = AdminUserInterestCompetition::create()->where('user_id', $uid)->where('type', 2)->get();
         $userInterestCompetition = isset($resCompetition->competition_ids) ? json_decode($resCompetition->competition_ids, true) : [];
         if ($userInterestCompetition) {
             $selectCompetitionIdArr = array_intersect($default, $userInterestCompetition);

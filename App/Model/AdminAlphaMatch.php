@@ -1,8 +1,9 @@
 <?php
 namespace App\Model;
 
-use App\Base\BaseModel;
-class AdminAlphaMatch extends BaseModel
+use EasySwoole\ORM\AbstractModel;
+
+class AdminAlphaMatch extends AbstractModel
 {
     protected $tableName = "admin_alpha_match";
 

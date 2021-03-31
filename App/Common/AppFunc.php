@@ -629,7 +629,7 @@ class AppFunc
      */
     public static function getUsersInterestMatch($match_id, $type = 1)
     {
-        if (!$match_id || !AdminMatch::getInstance()->where('match_id')->get()) {
+        if (!$match_id || !AdminMatch::create()->where('match_id')->get()) {
             return [];
         } else {
             RedisPool::invoke('redis', function(Redis $redis) use ($type, $match_id, &$uids) {
@@ -660,7 +660,7 @@ class AppFunc
      */
     public static function isInHotCompetition($competitionId)
     {
-        if ($setting = AdminSysSettings::getInstance()->where('sys_key', AdminSysSettings::COMPETITION_ARR)->get()) {
+        if ($setting = AdminSysSettings::create()->where('sys_key', AdminSysSettings::COMPETITION_ARR)->get()) {
             $com_arr = json_decode($setting->sys_value, true);
             if (in_array($competitionId, $com_arr)) {
                 return true;
@@ -676,7 +676,7 @@ class AppFunc
     //是否属于热门篮球赛事
     public static function isInHotBasketballCompetition($competitionId)
     {
-        if ($setting = AdminSysSettings::getInstance()->where('sys_key', AdminSysSettings::BASKETBALL_COMPETITION)->get()) {
+        if ($setting = AdminSysSettings::create()->where('sys_key', AdminSysSettings::BASKETBALL_COMPETITION)->get()) {
             $com_arr = json_decode($setting->sys_value, true);
             if (in_array($competitionId, $com_arr)) {
                 return true;
@@ -700,7 +700,7 @@ class AppFunc
             return false;
         } else {
 
-            if(!$userSetting = AdminUserSetting::getInstance()->where('user_id', $uid)->get()) {
+            if(!$userSetting = AdminUserSetting::create()->where('user_id', $uid)->get()) {
                 return false;
             } else {
                 if (!json_decode($userSetting->notice, true)['only_notice_my_interest']) {
@@ -723,13 +723,13 @@ class AppFunc
     public static function isNotice($user_id, $match_id, $type)
     {
         if (!$user_id || !$match_id) return true;
-        if ($user_setting = AdminUserSetting::getInstance()->where('user_id', $user_id)->get()) {
+        if ($user_setting = AdminUserSetting::create()->where('user_id', $user_id)->get()) {
             if (!$notice = json_decode($user_setting->notice, true)) {
                 return true;
             } else {
                 if (!$notice['only_notice_my_interest']) return true;
                 //仅提示关注的比赛
-                if (!$interest = AdminInterestMatches::getInstance()->where('uid', $user_id)->where('type', AdminInterestMatches::FOOTBALL_TYPE)->get()) {
+                if (!$interest = AdminInterestMatches::create()->where('uid', $user_id)->where('type', AdminInterestMatches::FOOTBALL_TYPE)->get()) {
                     return false;
                 } else {
 
@@ -803,7 +803,7 @@ class AppFunc
      */
     public static function userOutRoom($match_id, $fd, $type = 1)
     {
-        if (!$match_id || !AdminMatch::getInstance()->where('match_id')->get()) {
+        if (!$match_id || !AdminMatch::create()->where('match_id')->get()) {
             return false;
         } else {
             OnlineUser::getInstance()->update($fd, ['match_id' => 0]);
@@ -881,7 +881,7 @@ class AppFunc
      */
     public static function userDoInterestMatch($match_id, $uid, $sport_type = 1)
     {
-        if ($matchRes = AdminInterestMatches::getInstance()->where('uid', $uid)->where('type', $sport_type)->get()) {
+        if ($matchRes = AdminInterestMatches::create()->where('uid', $uid)->where('type', $sport_type)->get()) {
             $match_ids = json_decode($matchRes->match_ids, true);
             if ($match_ids) {
                 if (in_array($match_id, $match_ids)) {
@@ -904,7 +904,7 @@ class AppFunc
             }
         } else {
             $insert = ['uid' => $uid, 'match_ids' => json_encode([$match_id]), 'type' => $sport_type];
-            if (AdminInterestMatches::getInstance()->insert($insert)) {
+            if (AdminInterestMatches::create($insert)->save()) {
                 return true;
             } else {
                 return false;
@@ -922,7 +922,7 @@ class AppFunc
      */
     public static function userDelInterestMatch($match_id, $uid, $type = 1)
     {
-        if ($match = AdminInterestMatches::getInstance()->where('uid', $uid)->where('type', $type)->get()) {
+        if ($match = AdminInterestMatches::create()->where('uid', $uid)->where('type', $type)->get()) {
             $match_ids = json_decode($match->match_ids, true);
             $data = [];
             foreach ($match_ids as $id) {
@@ -948,7 +948,7 @@ class AppFunc
 
     public static function getMatchTeamName($match_id)
     {
-        if ($match = AdminMatch::getInstance()->where('match_id', $match_id)->get()) {
+        if ($match = AdminMatch::create()->where('match_id', $match_id)->get()) {
             $home_name_zh = $match->homeTeamName()->name_zh;
             $away_name_zh = $match->awayTeamName()->name_zh;
             return [$home_name_zh, $away_name_zh];
@@ -959,7 +959,7 @@ class AppFunc
 
     public static function getBasic($match_id)
     {
-        if ($match = AdminMatch::getInstance()->where('match_id', $match_id)->get()) {
+        if ($match = AdminMatch::create()->where('match_id', $match_id)->get()) {
             $format = FrontService::formatMatchThree([$match], 0, []);
             if (isset($format[0])) {
                 return $format[0];
@@ -973,7 +973,7 @@ class AppFunc
 
     public static function getBasicBasketballMatch($match_id)
     {
-        if ($match = BasketballMatch::getInstance()->where('match_id', $match_id)->get()) {
+        if ($match = BasketballMatch::create()->where('match_id', $match_id)->get()) {
             $format = FrontService::formatBasketballMatch([$match], 0, false);
             if (isset($format[0])) {
                 return $format[0];
@@ -1006,17 +1006,17 @@ class AppFunc
             return false;
         }
         $str_like = trim($home_team_en, ' FC') . '%' . trim($away_team_en, ' FC') . '%';
-        return AdminAlphaMatch::getInstance()->where('teamsEn', $str_like, 'like')->get();
+        return AdminAlphaMatch::create()->where('teamsEn', $str_like, 'like')->get();
     }
 
     public static function getProvinceAndCityCode($province, $city)
     {
         $provinceCode = '';
         $cityCode = '';
-        if ($province = AdminZoneList::getInstance()->where('name', $province . '%', 'like')->get()) {
+        if ($province = AdminZoneList::create()->where('name', $province . '%', 'like')->get()) {
             $provinceCode = $province->id;
         }
-        if ($city = AdminZoneList::getInstance()->where('name', $city . '%', 'like')->get()) {
+        if ($city = AdminZoneList::create()->where('name', $city . '%', 'like')->get()) {
             $cityCode = $city->id;
         }
         return [$provinceCode, $cityCode];
@@ -1071,7 +1071,7 @@ class AppFunc
         if (!$seasons) return [];
         $data = [];
         foreach ($seasons as $season) {
-            $season_info = AdminSeason::getInstance()->where('season_id', $season)->get();
+            $season_info = AdminSeason::create()->where('season_id', $season)->get();
 
             $competition_info = $season_info->getCompetition();
             $season_item = ['season_id' => $season_info->season_id, 'year' => $season_info->year];
@@ -1114,7 +1114,7 @@ class AppFunc
      */
     public static function checkSensitive($str)
     {
-        $sensitiveWords = AdminSensitive::getInstance()->where('status', AdminSensitive::STATUS_NORMAL)->field(['word'])->all();
+        $sensitiveWords = AdminSensitive::create()->where('status', AdminSensitive::STATUS_NORMAL)->field(['word'])->all();
         foreach ($sensitiveWords as $sword) {
             if (!$sword['word']) continue;
             if (strstr($str, $sword['word'])) return $sword['word'];

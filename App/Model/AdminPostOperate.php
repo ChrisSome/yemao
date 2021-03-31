@@ -5,18 +5,11 @@ namespace App\Model;
 use App\Base\BaseModel;
 use App\HttpController\Admin\User\Comment;
 use App\lib\Tool;
+use EasySwoole\ORM\AbstractModel;
 
-class AdminPostOperate extends BaseModel
+class AdminPostOperate extends AbstractModel
 {
-    const STATUS_SUCC       = 0; //发布成功
-    const STATUS_HANDING    = 1; //处理中（举报）
-    const STATUS_DEL        = 2; //删除
-    const STATUS_E_FAIL     = 3; //审核失败
-    const STATUS_E_SUCC     = 4; //审核成功
-
-
-    const ACTION_TYPE_FABOLUS = 1; //点赞
-    const ACTION_TYPE_COLLECT = 2; //点赞
+    const ACTION_TYPE_COLLECT = 2; //收藏
     protected $tableName = "admin_post_operates";
 
 

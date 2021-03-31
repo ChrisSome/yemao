@@ -2,7 +2,9 @@
 namespace App\Model;
 
 use App\Base\BaseModel;
-class AdminCompetition extends BaseModel
+use EasySwoole\ORM\AbstractModel;
+
+class AdminCompetition extends AbstractModel
 {
     protected $tableName = "admin_competition_list";
 

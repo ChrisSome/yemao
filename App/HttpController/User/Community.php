@@ -15,18 +15,14 @@ use App\Model\AdminMatch;
 use App\Model\AdminMessage;
 use App\Model\AdminNormalProblems;
 use App\Model\AdminPostComment;
-use App\Model\AdminSensitive;
 use App\Model\AdminSysSettings;
 use App\Model\AdminTeam;
 use App\Model\AdminUser;
-use App\Model\AdminUserFeedBack;
 use App\Model\AdminUserPost;
 use App\Model\AdminUserPostsCategory;
-use App\Model\BasketballMatch;
 use App\Model\BasketballMatchSeason;
 use App\Model\BasketballTeam;
 use App\Task\SerialPointTask;
-use App\Utility\Log\Log;
 use App\Utility\Message\Status as Statuses;
 use easySwoole\Cache\Cache;
 use EasySwoole\EasySwoole\Swoole\Task\TaskManager;
@@ -73,7 +69,7 @@ class Community extends FrontUserController
             $page = !empty($this->params['page']) ? (int)$this->params['page']: 1;
             $size = !empty($this->params['size']) ? (int)$this->params['size'] : 10;
             $cId = (int)$this->params['comment_id'];
-            $comment = AdminPostComment::getInstance()->find($cId);
+            $comment = AdminPostComment::create()->where('id', $cId)->get();
             if (!$comment) {
                 return $this->writeJson(Status::CODE_WRONG_RES, Status::$msg[Status::CODE_WRONG_RES]);
 
@@ -82,10 +78,10 @@ class Community extends FrontUserController
             if ($comment->top_comment_id == 0) {
                 $fatherComment = [$comment];
             } else {
-                $fatherComment = AdminPostComment::getInstance()->where('id', $comment->top_comment_id)->where('status', AdminUserPost::NEW_STATUS_DELETED, '<>')->all();
+                $fatherComment = AdminPostComment::create()->where('id', $comment->top_comment_id)->where('status', AdminUserPost::NEW_STATUS_DELETED, '<>')->all();
 
             }
-            $childCommentModel = AdminPostComment::getInstance()->where('top_comment_id', $fatherComment[0]['id'])->where('status', AdminUserPost::STATUS_DEL, '<>')->getAll($page, $size);
+            $childCommentModel = AdminPostComment::create()->where('top_comment_id', $fatherComment[0]['id'])->where('status', AdminUserPost::STATUS_DEL, '<>')->getAll($page, $size);
             $childComments = $childCommentModel->all();
 
             $count = $childCommentModel->lastQueryResult()->getTotalCount();
@@ -115,7 +111,7 @@ class Community extends FrontUserController
 
         }
 
-        $comment = AdminPostComment::getInstance()->find($comment_id);
+        $comment = AdminPostComment::create()->where('id', $comment_id)->get();
         if (!$comment) {
             return $this->writeJson(Status::CODE_WRONG_RES, Status::$msg[Status::CODE_WRONG_RES]);
 
@@ -146,7 +142,7 @@ class Community extends FrontUserController
         $size = !empty($this->params['size']) ? (int)$this->params['size'] : 10;
         $id = !empty($this->params['post_id']) ? (int)$this->params['post_id'] : 0;
 
-        $info = AdminUserPost::getInstance()->get(['id'=>$id]);
+        $info = AdminUserPost::create()->where('id', $id)->get();
 
         if (!$info) {
             return $this->writeJson(Status::CODE_ERR, '对应帖子不存在');
@@ -165,7 +161,7 @@ class Community extends FrontUserController
         $postInfo = FrontService::handPosts([$info], $this->auth['id'] ?: 0)[0];
 
         //展示最新评论
-        $commentModel = AdminPostComment::getInstance();
+        $commentModel = AdminPostComment::create();
         $commentModel = $commentModel->where('post_id', $id)
             ->where('status', [AdminPostComment::STATUS_NORMAL, AdminPostComment::STATUS_REPORTED], 'in')
             ->where('top_comment_id', 0);
@@ -199,8 +195,8 @@ class Community extends FrontUserController
         if ($list) {
             foreach ($list as $item) {
 
-                $child_comments = AdminPostComment::getInstance()->where('top_comment_id', $item['id'])->where('status', [AdminPostComment::STATUS_NORMAL, AdminPostComment::STATUS_REPORTED], 'in')->order('created_at', 'DESC')->limit(3)->all();
-                $child_comments_count = AdminPostComment::getInstance()->where('top_comment_id', $item['id'])->where('status', [AdminPostComment::STATUS_NORMAL, AdminPostComment::STATUS_REPORTED], 'in')->order('created_at', 'DESC')->count('id');
+                $child_comments = AdminPostComment::create()->where('top_comment_id', $item['id'])->where('status', [AdminPostComment::STATUS_NORMAL, AdminPostComment::STATUS_REPORTED], 'in')->order('created_at', 'DESC')->limit(3)->all();
+                $child_comments_count = AdminPostComment::create()->where('top_comment_id', $item['id'])->where('status', [AdminPostComment::STATUS_NORMAL, AdminPostComment::STATUS_REPORTED], 'in')->order('created_at', 'DESC')->count('id');
                 $data['id'] = $item->id;
                 $data['user_info'] = $item->uInfo();
                 $data['is_follow'] = AppFunc::isFollow($this->auth['id'], $item['user_id']);
@@ -248,7 +244,7 @@ class Community extends FrontUserController
             // 1热度 回复数 2最新发帖 3最早发帖 4最新回复
             $order = $orderType == 1 ? 'respon_number desc' : ($orderType == 2 ? 'created_at desc' :
                 ($orderType == 3 ? 'created_at asc' : 'last_respon_time desc'));
-            $data = Utils::queryHandler(AdminUserPost::getInstance(), $where, null,
+            $data = Utils::queryHandler(AdminUserPost::create(), $where, null,
                 '*', false, $order, null, $page, $size);
             $list = FrontService::handPosts($data['list'], $authId);
             return ['normal_posts' => $list, 'count' => $data['total']];
@@ -265,10 +261,10 @@ class Community extends FrontUserController
         // 输出数据
         $result = ['count' => 0, 'title' => [], 'banner' => [], 'top_posts' => [], 'normal_posts' => []];
         // 模块标题
-        $result['title'] = Utils::queryHandler(AdminUserPostsCategory::getInstance(),
+        $result['title'] = Utils::queryHandler(AdminUserPostsCategory::create(),
             'status=?', AdminUserPostsCategory::STATUS_NORMAL, 'id,name,icon', false);
         // 模块轮播
-        $tmp = Utils::queryHandler(AdminUserPostsCategory::getInstance(), 'id=?', $categoryId, 'id,dispose');
+        $tmp = Utils::queryHandler(AdminUserPostsCategory::create(), 'id=?', $categoryId, 'id,dispose');
         if (!empty($tmp['dispose'])) {
             $tmp = json_decode($tmp['dispose'], true);
             foreach ($tmp as $v) {
@@ -277,7 +273,7 @@ class Community extends FrontUserController
         }
         //置顶帖子
         $where = 'status in (' . $statusStr . ') and ' . ($categoryId == 1 ? 'is_all_top=1' : 'is_top=1 and cat_id=' . $categoryId);
-        $result['top_posts'] = Utils::queryHandler(AdminUserPost::getInstance(),
+        $result['top_posts'] = Utils::queryHandler(AdminUserPost::create(),
             $where, null, 'id,title', false, 'created_at desc');
         //普通帖子
         $where = 'status in (' . $statusStr . ')';
@@ -309,22 +305,22 @@ class Community extends FrontUserController
         $page = !empty($this->params['page']) ? $this->params['page'] : 1;
         $size = !empty($this->params['size']) ? $this->params['size'] : 10;
         //帖子
-        $posts = AdminUserPost::getInstance()->where('status', [AdminUserPost::NEW_STATUS_NORMAL, AdminUserPost::NEW_STATUS_REPORTED, AdminUserPost::NEW_STATUS_LOCK], 'in')
+        $posts = AdminUserPost::create()->where('status', [AdminUserPost::NEW_STATUS_NORMAL, AdminUserPost::NEW_STATUS_REPORTED, AdminUserPost::NEW_STATUS_LOCK], 'in')
             ->where('title', '%' . $key_word . '%', 'like')->getLimit($page, $size);
         $format_posts = FrontService::handPosts($posts->all(null), $this->auth['id']);
         $post_count = $posts->lastQueryResult()->getTotalCount();
 
         //资讯
-        $information = AdminInformation::getInstance()->where('status', AdminInformation::STATUS_NORMAL)->where('title',  '%' . $key_word . '%', 'like')->getLimit($page, $size);
+        $information = AdminInformation::create()->where('status', AdminInformation::STATUS_NORMAL)->where('title',  '%' . $key_word . '%', 'like')->getLimit($page, $size);
         $format_information = FrontService::handInformation($information->all(null), $this->auth['id']);
         $information_count = $information->lastQueryResult()->getTotalCount();
         //足球比赛
         list($selectCompetitionIdArr, $interestMatchArr) = AdminUser::getUserShowCompetitionId($uid);
-        if ($team = AdminTeam::getInstance()->where('name_zh', '%' . $key_word . '%', 'like')->all()) {
+        if ($team = AdminTeam::create()->where('name_zh', '%' . $key_word . '%', 'like')->all()) {
             $team_ids = array_column($team, 'team_id');
             if ($team_ids) {
                 $team_ids_str = AppFunc::changeArrToStr($team_ids);
-                $matches = AdminMatch::getInstance()->where('home_team_id in ' . $team_ids_str . ' or away_team_id in ' . $team_ids_str)->getLimit($page, $size);
+                $matches = AdminMatch::create()->where('home_team_id in ' . $team_ids_str . ' or away_team_id in ' . $team_ids_str)->getLimit($page, $size);
                 $match_list = $matches->all(null);
             } else {
                 $match_list = [];
@@ -339,11 +335,11 @@ class Community extends FrontUserController
         }
         //篮球比赛
         list($selectCompetitionIdArr, $interestMatchArr) = AdminUser::getUserShowBasketballCompetition($uid);
-        if ($team = BasketballTeam::getInstance()->where('name_zh', '%' . $key_word . '%', 'like')->all()) {
+        if ($team = BasketballTeam::create()->where('name_zh', '%' . $key_word . '%', 'like')->all()) {
             $team_ids = array_column($team, 'team_id');
             if ($team_ids) {
                 $team_ids_str = AppFunc::changeArrToStr($team_ids);
-                $matches = BasketballMatchSeason::getInstance()->where('home_team_id in ' . $team_ids_str . ' or away_team_id in ' . $team_ids_str)->getLimit($page, $size, 'match_time');
+                $matches = BasketballMatchSeason::create()->where('home_team_id in ' . $team_ids_str . ' or away_team_id in ' . $team_ids_str)->getLimit($page, $size, 'match_time');
                 $match_list = $matches->all(null);
             } else {
                 $match_list = [];
@@ -360,7 +356,7 @@ class Community extends FrontUserController
 
 
         //用户
-        $users = AdminUser::getInstance()->where('nickname',  '%' . $key_word . '%', 'like')->where('status', [AdminUser::STATUS_NORMAL, AdminUser::STATUS_REPORTED, AdminUser::STATUS_FORBIDDEN], 'in')->getLimit($page, $size);
+        $users = AdminUser::create()->where('nickname',  '%' . $key_word . '%', 'like')->where('status', [AdminUser::STATUS_NORMAL, AdminUser::STATUS_REPORTED, AdminUser::STATUS_FORBIDDEN], 'in')->getLimit($page, $size);
         if (!$users) {
             $format_users = [];
             $user_count = 0;
@@ -456,7 +452,7 @@ class Community extends FrontUserController
         }
 
 
-        $model = AdminUserPost::getInstance()->where('status', AdminUserPost::STATUS_EXAMINE_SUCC)->where('user_id', $followUids, 'in')->field(['id', 'cat_id', 'user_id',  'title', 'imgs', 'created_at', 'hit', 'fabolus_number', 'content', 'respon_number', 'collect_number'])->getLimit($page, $size);
+        $model = AdminUserPost::create()->where('status', AdminUserPost::STATUS_EXAMINE_SUCC)->where('user_id', $followUids, 'in')->field(['id', 'cat_id', 'user_id',  'title', 'imgs', 'created_at', 'hit', 'fabolus_number', 'content', 'respon_number', 'collect_number'])->getLimit($page, $size);
 
         $list = $model->all(null);
         $total = $model->lastQueryResult()->getTotalCount();
@@ -509,7 +505,7 @@ class Community extends FrontUserController
             if (!empty($this->params['pid'])) {
                 $bool = AdminUserPost::create()->update($info, ['id' => (int)$data['pid']]);
             } else {
-                $bool = AdminUserPost::create()->insert($info);
+                $bool = AdminUserPost::create($info)->save();
             }
             if ($bool) {
                 return $this->writeJson(Status::CODE_OK, Status::$msg[Status::CODE_OK]);
@@ -533,7 +529,7 @@ class Community extends FrontUserController
                     'post_id' => (int)$this->params['pid'],
 
                 ];
-                AdminMessage::getInstance()->insert($message);
+                AdminMessage::create($message)->save();
             }
 
             if ($postId = $this->params['pid']) {
@@ -542,7 +538,7 @@ class Community extends FrontUserController
                 $boolInsert = AdminUserPost::create()->update($info, ['id' =>$postId]);
                 $postInfo = AdminUserPost::create()->where('id', $this->params['pid'])->get();
             } else {
-                $boolInsert = AdminUserPost::create()->insert($info);
+                $boolInsert = AdminUserPost::create($info)->save();
                 $postInfo = AdminUserPost::create()->where('id', $boolInsert)->get();
 
             }
@@ -601,7 +597,7 @@ class Community extends FrontUserController
         }
         $fabolus_number = AdminMessage::create()->where('user_id', $uid)->where('type', 2)->where('item_type', [1,2,4], 'in')->where('status', AdminMessage::STATUS_DEL, '<>')->count();
 
-        $user_info = AdminUser::getInstance()->where('id', $uid)->field(['id', 'nickname', 'photo', 'level', 'point', 'is_offical'])->get();
+        $user_info = AdminUser::create()->where('id', $uid)->field(['id', 'nickname', 'photo', 'level', 'point', 'is_offical'])->get();
         $user_info['fans_count'] = count(AppFunc::getUserFans($uid));
         $user_info['follow_count'] = count(AppFunc::getUserFollowing($uid));
         if ($this->auth['id']) {
@@ -613,10 +609,10 @@ class Community extends FrontUserController
         }
         $user_info['fabolus_number'] = $fabolus_number;
         $total = [
-            'post_total' => AdminUserPost::getInstance()->where('user_id', $uid)
+            'post_total' => AdminUserPost::create()->where('user_id', $uid)
                 ->where('status', AdminUserPost::NEW_STATUS_NORMAL)->count('id'),
-            'comment_total' => AdminPostComment::getInstance()->where('user_id', $uid)->where('status', AdminPostComment::STATUS_DEL, '<>')->count('id'),
-            'information_comment_total' => AdminInformationComment::getInstance()->where('user_id', $uid)->where('status', AdminInformationComment::STATUS_DELETE, '<>')->count(),
+            'comment_total' => AdminPostComment::create()->where('user_id', $uid)->where('status', AdminPostComment::STATUS_DEL, '<>')->count('id'),
+            'information_comment_total' => AdminInformationComment::create()->where('user_id', $uid)->where('status', AdminInformationComment::STATUS_DELETE, '<>')->count(),
         ];
 
         $user_info['item_total'] = $total;
@@ -671,7 +667,7 @@ class Community extends FrontUserController
         if (!$ids) {
             $users = [];
         } else {
-            $users = AdminUser::getInstance()->where('id', $ids, 'in')->field(['id', 'nickname', 'photo', 'level', 'is_offical'])->all();
+            $users = AdminUser::create()->where('id', $ids, 'in')->field(['id', 'nickname', 'photo', 'level', 'is_offical'])->all();
 
         }
         $data = [];
@@ -697,7 +693,7 @@ class Community extends FrontUserController
 
     public function normalProblemList()
     {
-        $normal_problems = AdminNormalProblems::getInstance()->where('status', 1)->all();
+        $normal_problems = AdminNormalProblems::create()->where('status', 1)->all();
         return $this->writeJson(Status::CODE_OK, Status::$msg[Status::CODE_OK], $normal_problems);
 
     }
@@ -722,20 +718,20 @@ class Community extends FrontUserController
         if (!$uid && !$mid) return $this->writeJson(Status::CODE_W_PARAM, Status::$msg[Status::CODE_W_PARAM]);
 
         if ($type == 1) { //发帖
-            $model = AdminUserPost::getInstance()->where('user_id', $uid)->where('status', AdminUserPost::SHOW_IN_FRONT, 'in')->getLimit($page, $size);
+            $model = AdminUserPost::create()->where('user_id', $uid)->where('status', AdminUserPost::SHOW_IN_FRONT, 'in')->getLimit($page, $size);
             $list = $model->all(null);
             $total = $model->lastQueryResult()->getTotalCount();
             $format_post = FrontService::handPosts($list, $this->auth['id']);
             $return_data = ['data' => $format_post, 'count' => $total];
         } else if ($type == 2) {//回帖
-            $comment_model = AdminPostComment::getInstance()->where('user_id', $uid)->where('status', AdminPostComment::SHOW_IN_FRONT, 'in')->getAll($page, $size);
+            $comment_model = AdminPostComment::create()->where('user_id', $uid)->where('status', AdminPostComment::SHOW_IN_FRONT, 'in')->getAll($page, $size);
             $list= $comment_model->all(null);
             $total = $comment_model->lastQueryResult()->getTotalCount();
             $format_comment = FrontService::handComments($list, $this->auth['id']);
             $return_data = ['data' => $format_comment, 'count' => $total];
 
         } else if ($type == 3) {
-            $information_comment_model = AdminInformationComment::getInstance()->where('user_id', $uid)->where('status', AdminInformationComment::SHOW_IN_FRONT, 'in')->getLimit($page, $size);
+            $information_comment_model = AdminInformationComment::create()->where('user_id', $uid)->where('status', AdminInformationComment::SHOW_IN_FRONT, 'in')->getLimit($page, $size);
             $list = $information_comment_model->all(null);
             $total = $information_comment_model->lastQueryResult()->getTotalCount();
             $format_comment = FrontService::handInformationComment($list, $this->auth['id']);

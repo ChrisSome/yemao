@@ -2,9 +2,9 @@
 
 namespace App\Model;
 
-use App\Base\BaseModel;
+use EasySwoole\ORM\AbstractModel;
 
-class BasketballSquadList extends BaseModel
+class BasketballSquadList extends AbstractModel
 {
     protected $tableName = "basketball_squad_list";
 

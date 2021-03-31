@@ -2,12 +2,9 @@
 
 namespace App\Model;
 
-use App\Base\BaseModel;
-use App\lib\pool\BaseRedis;
-use App\lib\Tool;
-use EasySwoole\Mysqli\QueryBuilder;
+use EasySwoole\ORM\AbstractModel;
 
-class AdminUserPhonecode extends BaseModel
+class AdminUserPhonecode extends AbstractModel
 {
     protected $tableName = "admin_user_phonecode";
     const STATUS_UNUSED = 0;

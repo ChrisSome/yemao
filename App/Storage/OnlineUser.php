@@ -46,7 +46,7 @@ class OnlineUser
     function set($fd, $info)
     {
         if ($info['user_id']) {
-            $user = AdminUser::getInstance()->where('id', $info['user_id'])->get();
+            $user = AdminUser::create()->where('id', $info['user_id'])->get();
             $user_level = $user->level;
         } else {
             $user_level = 0;

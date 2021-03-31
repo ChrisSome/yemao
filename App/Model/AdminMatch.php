@@ -1,11 +1,9 @@
 <?php
 
 namespace App\Model;
-use App\Base\BaseModel;
-use App\Base\FatherModel;
-use EasySwoole\Mysqli\QueryBuilder;
+use EasySwoole\ORM\AbstractModel;
 
-class AdminMatch  extends BaseModel
+class AdminMatch  extends AbstractModel
 {
     protected $tableName = "admin_match_list";
 

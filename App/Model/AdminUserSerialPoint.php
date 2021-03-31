@@ -2,10 +2,9 @@
 
 namespace App\Model;
 
-use App\Base\BaseModel;
-use App\Common\AppFunc;
+use EasySwoole\ORM\AbstractModel;
 
-class AdminUserSerialPoint extends BaseModel
+class AdminUserSerialPoint extends AbstractModel
 {
     const TASK_STATUS_NORMAL = 1;
     const USER_TASK = [
@@ -19,7 +18,6 @@ class AdminUserSerialPoint extends BaseModel
 
     public function getLimit($page, $limit)
     {
-        AppFunc::getTestDomain();
 
         return $this->order('created_at', 'DESC')
             ->limit(($page - 1) * $limit, $limit)

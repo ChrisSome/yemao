@@ -30,7 +30,7 @@ class Point  extends FrontUserController{
             if ($task['status'] != AdminUserSerialPoint::TASK_STATUS_NORMAL) {
                 continue;
             }
-            $done_times = AdminUserSerialPoint::getInstance()->where('task_id', $task['id'])->where('created_at', date('Y-m-d'))->count();
+            $done_times = AdminUserSerialPoint::create()->where('task_id', $task['id'])->where('created_at', date('Y-m-d'))->count();
             $user_tasks[$k]['done_times'] = $done_times;
         }
         return $this->writeJson(Status::CODE_OK, Status::$msg[Status::CODE_OK], $user_tasks);
@@ -44,7 +44,7 @@ class Point  extends FrontUserController{
     public function userSign()
     {
 
-        if (AdminUserSerialPoint::getInstance()->where('user_id', $this->auth['id'])->where('task_id', 1)->where('created_at', date('Y-m-d'))->get()) {
+        if (AdminUserSerialPoint::create()->where('user_id', $this->auth['id'])->where('task_id', 1)->where('created_at', date('Y-m-d'))->get()) {
             return $this->writeJson(Status::CODE_W_PARAM, Status::$msg[Status::CODE_W_PARAM]);
 
         }
@@ -58,7 +58,7 @@ class Point  extends FrontUserController{
 
     public function getPointList()
     {
-        $list = AdminUserSerialPoint::getInstance()->where('user_id', $this->auth['id'])->where('created_at', date('Y-m-d'))->order('id', 'DESC')->all();
+        $list = AdminUserSerialPoint::create()->where('user_id', $this->auth['id'])->where('created_at', date('Y-m-d'))->order('id', 'DESC')->all();
         return $this->writeJson(Status::CODE_W_PARAM, Status::$msg[Status::CODE_W_PARAM], $list);
 
     }

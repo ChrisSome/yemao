@@ -2,9 +2,9 @@
 
 namespace App\Model;
 
-use App\Base\BaseModel;
+use EasySwoole\ORM\AbstractModel;
 
-class AdminCountryCategory extends BaseModel
+class AdminCountryCategory extends AbstractModel
 {
     protected $tableName = "admin_country_category";
 

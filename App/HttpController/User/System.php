@@ -4,16 +4,10 @@
 namespace App\HttpController\User;
 
 use App\Model\AdminAdvertisement;
-use App\Model\AdminCategory;
-use App\Model\AdminMessage as MessageModel;
 use App\Base\FrontUserController;
 use App\Model\AdminSensitive;
 use App\Model\AdminSysSettings;
-use App\Model\AdminSystemAnnoucement;
-use App\Task\MessageTask;
-use App\Utility\Log\Log;
 use App\Utility\Message\Status;
-use EasySwoole\EasySwoole\Task\TaskManager;
 
 use EasySwoole\HttpAnnotation\AnnotationController;
 use EasySwoole\HttpAnnotation\AnnotationTag\Api;
@@ -49,50 +43,7 @@ class System extends FrontUserController
     const PUSH = ['start' => 1, 'goal' => 1, 'over' => 1,  'open_push' => 1, 'information' => 1];
     const BASKETBALL_PUSH = ['start' => 1, 'over' => 1,  'open_push' => 1];
     const PRIVATE = ['see_my_post' => 1, 'see_my_post_comment' => 1, 'see_my_information_comment' => 1];
-    /**
-     * 获取系统公告
-     */
-    public function index()
-    {
-        $params = $this->request()->getQueryParams();
-        $query = MessageModel::getInstance()->where('cate_id', AdminCategory::CATEGORY_ANNOCEMENT)
-            ->where('status', 1);
 
-        $count = $query->count();
-        $page = isset($params['page']) ? $params['page'] : 1;
-        $limit = isset($params['offset']) ? $params['offset'] : 10;
-        $data = $query->field('id, title, cate_name, status,created_at')->order('created_at', 'desc')->findAll($page, $limit);
-        return $this->writeJson(Status::CODE_OK, 'ok', [
-            'data' => $data,
-            'count' => $count
-        ]);
-    }
-
-    /**
-     * 公告详情
-     * @param $id
-     */
-    public function detail()
-    {
-        $id = $this->request()->getRequestParam('id');
-        $info = MessageModel::getInstance()->find($id);
-        if (!$info) {
-            $this->writeJson(Status::CODE_ERR, '对应公告不存在');
-            return ;
-        }
-        //写异步task记录已读
-        $auth = $this->auth;
-        TaskManager::getInstance()->async(function ($taskId, $workerIndex) use ($info, $auth){
-            $messageTask = new MessageTask([
-                'message_id' => $info['id'],
-                'message_title' => $info['title'],
-                'user_id' => $auth['id'],
-                'mobile' => $auth['mobile'],
-            ]);
-            $messageTask->execData();
-        });
-        return $this->writeJson(Status::CODE_OK, 'ok', $info);
-    }
 
     /**
      * 热更新
@@ -146,7 +97,7 @@ class System extends FrontUserController
      */
     public function adImgs()
     {
-        if ($res = AdminSysSettings::getInstance()->where('sys_key', AdminSysSettings::SETTING_OPEN_ADVER)->get()) {
+        if ($res = AdminSysSettings::create()->where('sys_key', AdminSysSettings::SETTING_OPEN_ADVER)->get()) {
             $data = json_decode($res->sys_value, true);
         } else {
             $data = [
@@ -172,7 +123,7 @@ class System extends FrontUserController
 
         }
 
-        $ads = AdminAdvertisement::getInstance()->where('status', AdminAdvertisement::STATUS_NORMAL)->where('cat_id', $this->params['cat_id'])->all();
+        $ads = AdminAdvertisement::create()->where('status', AdminAdvertisement::STATUS_NORMAL)->where('cat_id', $this->params['cat_id'])->all();
         return $this->writeJson(Status::CODE_OK, Status::$msg[Status::CODE_OK], $ads);
 
     }
@@ -186,7 +137,7 @@ class System extends FrontUserController
      */
     public function sensitiveWord()
     {
-        $words = AdminSensitive::getInstance()->where('id', 0, '>')->field(['word'])->all();
+        $words = AdminSensitive::create()->where('id', 0, '>')->field(['word'])->all();
         return $this->writeJson(Status::CODE_OK, Status::$msg[Status::CODE_OK], $words);
 
     }

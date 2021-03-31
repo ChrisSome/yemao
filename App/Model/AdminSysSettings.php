@@ -2,13 +2,12 @@
 
 namespace App\Model;
 
-use App\Base\BaseModel;
+use EasySwoole\ORM\AbstractModel;
 
-class AdminSysSettings extends BaseModel
+class AdminSysSettings extends AbstractModel
 {
     protected $tableName = "admin_sys_setting";
 
-    const SYSTEM_SETTING_KEY = 'admin:system:%s';
     const SETTING_DATA_COMPETITION = 'data_competition';
     const SETTING_TITLE_BANNER = 'information_title_banner';
     const SETTING_BASKETBALL_TITLE_BANNER = 'basketball_title_banner';

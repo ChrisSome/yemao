@@ -7,7 +7,6 @@ use App\Common\AppFunc;
 use App\Common\Time;
 use App\GeTui\BatchSignalPush;
 use App\lib\FrontService;
-use App\lib\Tool;
 use App\lib\Utils;
 use App\Model\AdminCompetition;
 use App\Model\AdminInformation;
@@ -22,7 +21,6 @@ use App\Model\AdminUserOperate;
 use App\Model\AdminUserSetting;
 use App\Model\BasketBallCompetition;
 use App\Model\BasketballMatch;
-use App\Storage\OnlineUser;
 use App\Task\SerialPointTask;
 use App\Utility\Message\Status;
 use easySwoole\Cache\Cache;
@@ -65,7 +63,7 @@ class InformationApi extends FrontUserController
     {
         $return = [];
 
-        $data_competitions = AdminSysSettings::getInstance()->where('sys_key', AdminSysSettings::SETTING_DATA_COMPETITION)->get();
+        $data_competitions = AdminSysSettings::create()->where('sys_key', AdminSysSettings::SETTING_DATA_COMPETITION)->get();
 
         if (!$data_competitions || !$data_competitions['sys_value']) {
             return $this->writeJson(Status::CODE_OK, Status::$msg[Status::CODE_OK], $return);
@@ -93,7 +91,7 @@ class InformationApi extends FrontUserController
         $normal_competition = $data_competitions_info;
         foreach ($normal_competition as $item) {
 
-            if ($competition = AdminCompetition::getInstance()->where('competition_id', $item)->get()) {
+            if ($competition = AdminCompetition::create()->where('competition_id', $item)->get()) {
                 $data['competition_id'] = $competition->competition_id;
                 $data['short_name_zh'] = $competition->short_name_zh;
                 $data['type'] = 3;
@@ -184,7 +182,7 @@ class InformationApi extends FrontUserController
         if ($type == 1) {
             if ($sportType == 1) { //资讯头条
                 //头条banner
-                $setting = AdminSysSettings::getInstance()->where('sys_key', AdminSysSettings::SETTING_TITLE_BANNER)->get();
+                $setting = AdminSysSettings::create()->where('sys_key', AdminSysSettings::SETTING_TITLE_BANNER)->get();
                 $decode = json_decode($setting->sys_value, true);
                 $banner_list = [];
 
@@ -200,13 +198,13 @@ class InformationApi extends FrontUserController
                     }
                 }
                 if (!empty($decode['match'])) {
-                    $matches = AdminMatch::getInstance()->where('match_id', $decode['match'], 'in')->all();
+                    $matches = AdminMatch::create()->where('match_id', $decode['match'], 'in')->all();
                     $formatMatches = FrontService::formatMatchThree($matches, 0, []);
                 } else {
                     $formatMatches = [];
                 }
 
-                $model = AdminInformation::getInstance()->where('type', 1)->where('sport_type', $sportType)
+                $model = AdminInformation::create()->where('type', 1)->where('sport_type', $sportType)
                     ->where('status', AdminInformation::STATUS_NORMAL)->getLimit($page, $size);
 
                 $list = $model->all(null);
@@ -220,7 +218,7 @@ class InformationApi extends FrontUserController
                 ];
             } else { //篮球资讯
                 //头条banner
-                $setting = AdminSysSettings::getInstance()->where('sys_key', AdminSysSettings::SETTING_BASKETBALL_TITLE_BANNER)->get();
+                $setting = AdminSysSettings::create()->where('sys_key', AdminSysSettings::SETTING_BASKETBALL_TITLE_BANNER)->get();
                 $decode = json_decode($setting->sys_value, true);
                 $banner_list = [];
 
@@ -236,14 +234,14 @@ class InformationApi extends FrontUserController
                     }
                 }
                 if (!empty($decode['match'])) {
-                    $matches = BasketballMatch::getInstance()->where('match_id', $decode['match'], 'in')->all();
+                    $matches = BasketballMatch::create()->where('match_id', $decode['match'], 'in')->all();
                     $formatMatches = FrontService::formatBasketballMatch($matches, 0, []);
                 } else {
                     $formatMatches = [];
                 }
 
 
-                $model = AdminInformation::getInstance()->where('type', 1)->where('sport_type', $sportType)
+                $model = AdminInformation::create()->where('type', 1)->where('sport_type', $sportType)
                     ->where('status', AdminInformation::STATUS_NORMAL)->getLimit($page, $size);
 
                 $list = $model->all(null);
@@ -261,7 +259,7 @@ class InformationApi extends FrontUserController
         } else if ($type == 2) {
             //转会
 
-            $model = AdminInformation::getInstance()->where('type', 2)->where('sport_type', $sportType)->where('status', AdminInformation::STATUS_NORMAL)->getLimit($page, $size);
+            $model = AdminInformation::create()->where('type', 2)->where('sport_type', $sportType)->where('status', AdminInformation::STATUS_NORMAL)->getLimit($page, $size);
             $list = $model->all(null);
             $count = $model->lastQueryResult()->getTotalCount();
             $format_information = FrontService::handInformation($list, $this->auth['id'], $sportType);
@@ -279,18 +277,18 @@ class InformationApi extends FrontUserController
             //普通赛事
             if ($competition_id = $this->params['competition_id']) {
                 if ($this->params['sport_type'] == 1) {
-                    $matches = AdminMatch::getInstance()->where('competition_id', $competition_id)->where('match_time', time(), '>')->where('status_id', FootballApi::STATUS_NO_START)->order('match_time', 'ASC')->limit(2)->all();
+                    $matches = AdminMatch::create()->where('competition_id', $competition_id)->where('match_time', time(), '>')->where('status_id', FootballApi::STATUS_NO_START)->order('match_time', 'ASC')->limit(2)->all();
                     $format_matches = FrontService::formatMatchThree($matches, 0, true);
                     $page = $this->params['page'] ?: 1;
                     $size = $this->params['size'] ?: 10;
-                    $model = AdminInformation::getInstance()->where('competition_id', $competition_id)->where('sport_type', 1)->where('status', AdminInformation::STATUS_NORMAL)->getLimit($page, $size);
+                    $model = AdminInformation::create()->where('competition_id', $competition_id)->where('sport_type', 1)->where('status', AdminInformation::STATUS_NORMAL)->getLimit($page, $size);
                     $list = $model->all(null);
                     $format_information = FrontService::handInformation($list, $this->auth['id']);
                     $count = $model->lastQueryResult()->getTotalCount();
                 } else {
-                    $matches = BasketballMatch::getInstance()->where('competition_id', $competition_id)->where('match_time', time(), '>')->where('status_id', 1)->order('match_time', 'ASC')->limit(2)->all();
+                    $matches = BasketballMatch::create()->where('competition_id', $competition_id)->where('match_time', time(), '>')->where('status_id', 1)->order('match_time', 'ASC')->limit(2)->all();
                     $format_matches = FrontService::formatBasketballMatch($matches, 0, true);
-                    $model = AdminInformation::getInstance()->where('competition_id', $competition_id)->where('sport_type', 2)->where('status', AdminInformation::STATUS_NORMAL)->getLimit($page, $size);
+                    $model = AdminInformation::create()->where('competition_id', $competition_id)->where('sport_type', 2)->where('status', AdminInformation::STATUS_NORMAL)->getLimit($page, $size);
                     $list = $model->all(null);
                     $format_information = FrontService::handInformation($list, $this->auth['id'], 2);
                     $count = $model->lastQueryResult()->getTotalCount();
@@ -368,12 +366,12 @@ class InformationApi extends FrontUserController
     {
         $competition_id = !empty($this->params['competition_id']) ? (int)$this->params['competition_id'] : 0;
         if ($competition_id) {
-            $matches = AdminMatch::getInstance()->where('competition_id', $competition_id)->where('status_id', FootballApi::STATUS_NO_START)->order('match_time', 'ASC')->limit(2)->all();
+            $matches = AdminMatch::create()->where('competition_id', $competition_id)->where('status_id', FootballApi::STATUS_NO_START)->order('match_time', 'ASC')->limit(2)->all();
             $format_matches = FrontService::formatMatchThree($matches, 0, []);
 
             $page = !empty($this->params['page']) ? (int)$this->params['page'] : 1;
             $size = !empty($this->params['size']) ? (int)$this->params['size'] : 10;
-            $model = AdminInformation::getInstance()->where('competition_id', $competition_id)->field(['id', 'title', 'fabolus_number', 'respon_number', 'img'])->where('status', AdminInformation::STATUS_NORMAL)->where('created_at', date('Y-m-d H:i:s'), '>=')->getLimit($page, $size);
+            $model = AdminInformation::create()->where('competition_id', $competition_id)->field(['id', 'title', 'fabolus_number', 'respon_number', 'img'])->where('status', AdminInformation::STATUS_NORMAL)->where('created_at', date('Y-m-d H:i:s'), '>=')->getLimit($page, $size);
             $list = $model->all(null);
             $informations = [];
             if ($list) {
@@ -503,19 +501,19 @@ class InformationApi extends FrontUserController
         $params = $this->params;
         $authId = empty($this->auth['id']) || intval($this->auth['id']) < 1 ? 0 : intval($this->auth['id']); // 当前登录用户ID
         $informationId = empty($params['information_id']) || intval($params['information_id']) < 1 ? 0 : intval($params['information_id']);
-        $information = $informationId > 0 ? Utils::queryHandler(AdminInformation::getInstance(), 'id=?', $informationId) : false;
+        $information = $informationId > 0 ? Utils::queryHandler(AdminInformation::create(), 'id=?', $informationId) : false;
         if (empty($information)) return $this->writeJson(Status::CODE_W_PARAM, Status::$msg[Status::CODE_W_PARAM]);
         if (intval($information['status']) == AdminInformation::STATUS_DELETE) return $this->writeJson(Status::CODE_WRONG_RES, Status::$msg[Status::CODE_WRONG_RES]);
         // 填充用户信息
-        $information['user_info'] = Utils::queryHandler(AdminUser::getInstance(),
+        $information['user_info'] = Utils::queryHandler(AdminUser::create(),
             'id=?', $information['user_id'], 'id,nickname,photo,is_offical,level');
         $information['user_info']['is_follow'] = AppFunc::isFollow($authId, $information['user_id']);
         // 是否未被举报
-        $tmp = Utils::queryHandler(AdminUserOperate::getInstance(),
+        $tmp = Utils::queryHandler(AdminUserOperate::create(),
             'item_type=3 and type=1 and is_cancel=0 and item_id=? and user_id=?', [$informationId, $authId]);
         $information['is_fabolus'] = !empty($tmp);
         // 是否已被收藏
-        $tmp = Utils::queryHandler(AdminUserOperate::getInstance(),
+        $tmp = Utils::queryHandler(AdminUserOperate::create(),
             'item_type=3 and type=2 and is_cancel=0 and item_id=? and user_id=?', [$informationId, $authId]);
         $information['is_collect'] = !empty($tmp);
         // 类型
@@ -524,29 +522,29 @@ class InformationApi extends FrontUserController
         $size = empty($params['size']) || intval($params['size']) < 1 ? 10 : intval($params['size']);
         // 评论/回复数据
         $order = $orderType == 0 ? 'fabolus_number desc, id ASC' : ($orderType == 1 ? 'created_at asc' : ($orderType == 2 ? 'created_at desc, id ASC' : null));
-        $data = Utils::queryHandler(AdminInformationComment::getInstance(),
-            'information_id=? and top_comment_id=0 and parent_id=0', $informationId,
+        $data = Utils::queryHandler(AdminInformationComment::create(),
+            'information_id=? and top_comment_id=0 and parent_id=0 and status=0', $informationId,
             '*', false, $order, null, $page, $size);
         if (!empty($data['list'])) {
             $commentIdsStr = join(',', array_column($data['list'], 'id'));
             $userIdsStr = join(',', array_unique(array_filter(array_column($data['list'], 'user_id'))));
             // 用户数据映射
-            $userMapper = empty($userIdsStr) ? [] : Utils::queryHandler(AdminUser::getInstance(),
+            $userMapper = empty($userIdsStr) ? [] : Utils::queryHandler(AdminUser::create(),
                 'id in(' . $userIdsStr . ')', null,
                 'id,nickname,photo,is_offical,level', false, null, 'id,*,1');
             // 回复统计映射
-            $childCountMapper = Utils::queryHandler(AdminInformationComment::getInstance(),
+            $childCountMapper = Utils::queryHandler(AdminInformationComment::create(),
                 'information_id=? and status=? and top_comment_id in (' . $commentIdsStr . ')', [$informationId, AdminInformationComment::STATUS_NORMAL],
                 'top_comment_id,count(*) total', false,
                 ['group' => 'top_comment_id'], 'top_comment_id,total,1');
             // 点赞数据映射
-            $operateMapper = Utils::queryHandler(AdminUserOperate::getInstance(),
+            $operateMapper = Utils::queryHandler(AdminUserOperate::create(),
                 'item_type=4 and item_id in(' . $commentIdsStr . ') and type=1 and user_id=? and is_cancel=0', $authId,
                 'item_id', false, null, 'item_id,item_id,1');
             // 回复数据映射
             $childGroupMapper = [];
             $subSql = 'select count(*)+1 from admin_information_comments x where x.id=a.top_comment_id and x.information_id=? and x.status=? having (count(*)+1)<=3';
-            $tmp = Utils::queryHandler(AdminInformationComment::getInstance(),
+            $tmp = Utils::queryHandler(AdminInformationComment::create(),
                 'information_id=? and status=? and top_comment_id in(' . $commentIdsStr . ') and exists(' . $subSql . ')',
                 [$informationId, AdminInformationComment::STATUS_NORMAL, $informationId, AdminInformationComment::STATUS_NORMAL],
                 '*', false, 'a.created_at desc');
@@ -648,7 +646,7 @@ class InformationApi extends FrontUserController
         $information_id = $this->params['information_id'];
 
         //发布
-        if ($sensitiveWords = AdminSensitive::getInstance()->where('status', AdminSensitive::STATUS_NORMAL)->field(['word'])->all()) {
+        if ($sensitiveWords = AdminSensitive::create()->where('status', AdminSensitive::STATUS_NORMAL)->field(['word'])->all()) {
             foreach ($sensitiveWords as $sword) {
                 if (!$sword['word']) continue;
                 if (strstr($this->params['content'], $sword['word'])) {
@@ -656,7 +654,7 @@ class InformationApi extends FrontUserController
                 }
             }
         }
-        if (!$information = AdminInformation::getInstance()->find($information_id)) {
+        if (!$information = AdminInformation::create()->where('id', $information_id)->get()) {
             return $this->writeJson(Status::CODE_W_PARAM, Status::$msg[Status::CODE_W_PARAM]);
 
         } else {
@@ -669,16 +667,16 @@ class InformationApi extends FrontUserController
                 't_u_id' => $this->params['t_u_id'],
             ];
 
-            $rs = AdminInformationComment::getInstance()->insert($data);
+            $rs = AdminInformationComment::create($data)->save();
             $parent_id = $this->params['parent_id'];
             TaskManager::getInstance()->async(function () use($parent_id, $information_id) {
                 if ($parent_id) {
-                    AdminInformationComment::getInstance()->update(
+                    AdminInformationComment::create()->update(
                         ['respon_number' => QueryBuilder::inc(1)],
                         ['id' => $parent_id]
                     );
                 }
-                AdminInformation::getInstance()->update(
+                AdminInformation::create()->update(
                     ['respon_number' => QueryBuilder::inc(1)],
                     ['id' => $information_id]
                 );
@@ -686,7 +684,7 @@ class InformationApi extends FrontUserController
             });
 
         }
-        $data_task['task_id'] = 4;
+        $data_task['task_id'] = 3;
         $data_task['user_id'] = $this->auth['id'];
         TaskManager::getInstance()->async(new SerialPointTask($data_task));
         Cache::set('user_comment_information_' . $this->auth['id'], 1, 5);
@@ -701,11 +699,11 @@ class InformationApi extends FrontUserController
                 'title' => '资讯回复通知',
                 'did_user_id' => $this->auth['id'],
             ];
-            $message_data['user_id'] = AdminInformationComment::getInstance()->where('id', $this->params['parent_id'])->get()->user_id;
-            AdminMessage::getInstance()->insert($message_data);
+            $message_data['user_id'] = AdminInformationComment::create()->where('id', $this->params['parent_id'])->get()->user_id;
+            AdminMessage::create($message_data)->save();
 
         }
-        if ($comment_info = AdminInformationComment::getInstance()->where('id', $rs)->get()) {
+        if ($comment_info = AdminInformationComment::create()->where('id', $rs)->get()) {
             $format = FrontService::handInformationComment([$comment_info], $this->auth['id']);
 
             $comment_info_format = !empty($format[0]) ? $format[0] : [];
@@ -780,14 +778,14 @@ class InformationApi extends FrontUserController
         $top_comment_id = !empty($this->params['top_comment_id']) ? (int)$this->params['top_comment_id'] : 0;
         $page = isset($this->params['page']) ? $this->params['page'] : 1;
         $size = isset($this->params['size']) ? $this->params['size'] : 10;
-        if (!$father_comment = AdminInformationComment::getInstance()->find($top_comment_id)) {
+        if (!$father_comment = AdminInformationComment::create()->where('id', $top_comment_id)->get()) {
             return $this->writeJson(Status::CODE_W_PARAM, Status::$msg[Status::CODE_W_PARAM]);
 
         }
 
         $format_father = FrontService::handInformationComment([$father_comment], $this->auth['id']);
 
-        $model = AdminInformationComment::getInstance()->where('top_comment_id', $top_comment_id)->getLimit($page, $size);
+        $model = AdminInformationComment::create()->where('top_comment_id', $top_comment_id)->where('status', 0)->getLimit($page, $size);
         $list = $model->all(null);
         $total = $model->lastQueryResult()->getTotalCount();
 
@@ -864,9 +862,9 @@ class InformationApi extends FrontUserController
 //                'type' => 2
 //            ]
         ];
-        if ($basketball = AdminSysSettings::getInstance()->where('sys_key', AdminSysSettings::BASKETBALL_COMPETITION)->get()) {
+        if ($basketball = AdminSysSettings::create()->where('sys_key', AdminSysSettings::BASKETBALL_COMPETITION)->get()) {
             $basCompetitionIds = json_decode($basketball->sys_value, true);
-            if ($basCompetitionArr = BasketBallCompetition::getInstance()->where('competition_id', $basCompetitionIds, 'in')->all()) {
+            if ($basCompetitionArr = BasketBallCompetition::create()->where('competition_id', $basCompetitionIds, 'in')->all()) {
                 foreach ($basCompetitionArr as $item) {
                     $format[] = ['competition_id' => $item['competition_id'], 'short_name_zh' => $item['short_name_zh'], 'type' => 3];
                 }
@@ -943,7 +941,7 @@ class InformationApi extends FrontUserController
     public function informationPusher()
     {
         $information_id = !empty($this->params['information_id']) ? (int)$this->params['information_id'] : 0;
-        if (!$information_id || !$information = AdminInformation::getInstance()->where('id', $information_id)->get()) {
+        if (!$information_id || !$information = AdminInformation::create()->where('id', $information_id)->get()) {
             return $this->writeJson(Status::CODE_OK, Status::$msg[Status::CODE_OK], []);
         }
         $user = AdminUserSetting::create()->field(['user_id'])->where('push REGEXP \'\"open_push\":1,\"information\":1\'')->all();
@@ -951,7 +949,7 @@ class InformationApi extends FrontUserController
         $cids = AdminUser::create()->field(['cid'])->where('id', $uids, 'in')->where('cid', '', '<>')->all();
         $cidArr = array_column($cids, 'cid');
         $formatCid = array_keys(array_flip($cidArr));
-        if (!$res = AdminNoticeMatch::getInstance()->where('match_id', $information_id)->where('item_type', 3)->get()) {
+        if (!$res = AdminNoticeMatch::create()->where('match_id', $information_id)->where('item_type', 3)->get()) {
             $insertData = [
                 'uids' => json_encode($uids),
                 'match_id' => $information_id,
@@ -960,7 +958,7 @@ class InformationApi extends FrontUserController
                 'item_type' => 3,
                 'type' => 0
             ];
-            $rs = AdminNoticeMatch::getInstance()->insert($insertData);
+            $rs = AdminNoticeMatch::create($insertData)->save();
             $info['rs'] = $rs;  //开赛通知
             $pushInfo = [
                 'title' => $information->title,
