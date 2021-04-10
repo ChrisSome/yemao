@@ -187,6 +187,7 @@ class Router extends AbstractRouter
             $r->addRoute(['POST'], '/user/userDoTask', '/User/UserCenter/userDoTask');   // 签到与分享
             $r->addRoute(['GET'], '/user/getPointList', '/User/UserCenter/getPointList');   // 积分列表
             $r->addRoute(['POST'], '/user/userFeedBack', '/User/UserCenter/userFeedBack');   // 用户反馈
+            $r->addRoute(['POST'], '/user/userBlock', '/User/UserCenter/userBlock');   //拉黑
 
 
 

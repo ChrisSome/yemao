@@ -22,6 +22,7 @@ use App\Model\AdminUserPost;
 use App\Model\AdminUserPostsCategory;
 use App\Model\BasketballMatchSeason;
 use App\Model\BasketballTeam;
+use App\Model\UserBlock;
 use App\Task\SerialPointTask;
 use App\Utility\Message\Status as Statuses;
 use easySwoole\Cache\Cache;
@@ -36,6 +37,7 @@ use EasySwoole\HttpAnnotation\AnnotationTag\Param;
 use EasySwoole\HttpAnnotation\AnnotationTag\ApiDescription;
 use EasySwoole\HttpAnnotation\AnnotationTag\Method;
 use EasySwoole\HttpAnnotation\AnnotationTag\ApiSuccess;
+use function FastRoute\TestFixtures\empty_options_cached;
 
 
 class Community extends FrontUserController
@@ -235,10 +237,24 @@ class Community extends FrontUserController
         $size = empty($params['size']) || intval($params['size']) < 1 ? 10 : intval($params['size']);
         // 当前登录用户ID
         $authId = empty($this->auth['id']) || intval($this->auth['id']) < 1 ? 0 : intval($this->auth['id']);
+        //拉黑的用户id
+        if ($block = UserBlock::create()->where('user_id', $authId)->get()) {
+            $blockUserIds = json_decode($block->block_user_ids, true);
+        } else {
+            $blockUserIds = [];
+        }
         // 状态条件
         $statusStr = AdminUserPost::NEW_STATUS_NORMAL . ',' . AdminUserPost::NEW_STATUS_REPORTED . ',' . AdminUserPost::NEW_STATUS_LOCK;
         // 获取帖子清单助手
-        $getPostListHandler = function ($where) use ($isRefine, $orderType, $authId, $page, $size) {
+        $getPostListHandler = function ($where) use ($isRefine, $orderType, $authId, $page, $size, $blockUserIds) {
+            if ($blockUserIds && is_array($blockUserIds) && !empty($blockUserIds)) {
+                $strUserIds = implode(",", $blockUserIds);
+                $formatStrUserIds = "(" . $strUserIds . ")";
+                if ($authId) {
+                    $where .= ' and user_id not in ' . $formatStrUserIds;
+
+                }
+            }
             if ($isRefine > 0) $where .= ' and is_refine=1'; // 精华
             if ($orderType < 1 || $orderType > 4) return false;
             // 1热度 回复数 2最新发帖 3最早发帖 4最新回复
@@ -305,8 +321,18 @@ class Community extends FrontUserController
         $page = !empty($this->params['page']) ? $this->params['page'] : 1;
         $size = !empty($this->params['size']) ? $this->params['size'] : 10;
         //帖子
+        $authId = !empty($this->auth['id']) ? (int)$this->auth['id'] : 0;
+        if ($block = UserBlock::create()->where('user_id', $authId)->get()) {
+            $decodeBlockUserIds = json_decode($block->block_user_ids, true);
+        } else {
+            $decodeBlockUserIds = [];
+        }
         $posts = AdminUserPost::create()->where('status', [AdminUserPost::NEW_STATUS_NORMAL, AdminUserPost::NEW_STATUS_REPORTED, AdminUserPost::NEW_STATUS_LOCK], 'in')
-            ->where('title', '%' . $key_word . '%', 'like')->getLimit($page, $size);
+            ->where('title', '%' . $key_word . '%', 'like');
+        if ($authId && !empty($decodeBlockUserIds)) {
+            $posts = $posts->where('user_id', $decodeBlockUserIds, 'not in');
+        }
+        $posts = $posts->getLimit($page, $size);
         $format_posts = FrontService::handPosts($posts->all(null), $this->auth['id']);
         $post_count = $posts->lastQueryResult()->getTotalCount();
 
@@ -616,6 +642,15 @@ class Community extends FrontUserController
         ];
 
         $user_info['item_total'] = $total;
+        //是否拉黑该用户
+        if (!$userBlock = UserBlock::create()->where('user_id', $this->auth['id'])->get()) {
+            $user_info['is_block'] = false;
+        } else {
+            $res = json_decode($userBlock->block_user_ids, true);
+            if (in_array($uid, $res)) {
+                $user_info['is_block'] = true;
+            }
+        }
         return $this->writeJson(Status::CODE_OK, Status::$msg[Status::CODE_OK], $user_info);
 
     }

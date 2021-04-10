@@ -19,6 +19,7 @@ use App\Model\AdminUserPost;
 use App\Model\AdminUserSerialPoint;
 use App\Model\AdminUserSetting;
 use App\Model\ChatHistory;
+use App\Model\UserBlock;
 use App\Utility\Message\Status;
 use EasySwoole\Validate\Validate;
 
@@ -668,6 +669,58 @@ class UserCenter   extends FrontUserController{
             return $this->writeJson(Status::CODE_OK, Status::$msg[Status::CODE_OK]);
 
 
+        }
+    }
+
+    /**
+     * 拉黑逻辑
+     */
+    public function userBlock()
+    {
+        $actionType = !empty($this->params['action_type']) ? trim($this->params['action_type']) : '';
+        if (empty($actionType) || !in_array($actionType, ['add', 'del'])) {
+            return $this->writeJson(Status::CODE_W_PARAM, Status::$msg[Status::CODE_W_PARAM]);
+        }
+        $blockUserId = !empty($this->params['block_user_id']) ? (int)$this->params['block_user_id'] : 0;
+        if (!$blockUserId) {
+            return $this->writeJson(Status::CODE_W_PARAM, Status::$msg[Status::CODE_W_PARAM]);
+        }
+        if ($actionType == 'add') {
+            if (!$blockUser = UserBlock::create()->where('user_id', (int)$this->auth['id'])->get()) {
+                $inserData = ['user_id' => (int)$this->auth['id'], 'block_user_ids' => json_encode([$blockUserId])];
+                $res = UserBlock::create($inserData)->save();
+            } else {
+                $blockUserIds = json_decode($blockUser->block_user_ids, true);
+                if (is_array($blockUserIds)) {
+                    $blockUserIds[] = $blockUserId;
+                    $blockUser->block_user_ids = json_encode($blockUserIds);
+                    $res = $blockUser->update();
+                } else {
+                    return $this->writeJson(Status::CODE_WRONG_RES, Status::$msg[Status::CODE_WRONG_RES]);
+                }
+            }
+        } else {
+            if (!$blockUser = UserBlock::create()->where('user_id', (int)$this->auth['id'])->get()) {
+                return $this->writeJson(Status::CODE_WRONG_RES, Status::$msg[Status::CODE_WRONG_RES]);
+            } else {
+                $blockUserIds = json_decode($blockUser->block_user_ids, true);
+                if (!$blockUserIds || !is_array($blockUserIds)) {
+                    return $this->writeJson(Status::CODE_WRONG_RES, Status::$msg[Status::CODE_WRONG_RES]);
+                } else {
+                    foreach ($blockUserIds as $k => $value) {
+                        if ($blockUserId == $blockUserId) {
+                            unset($blockUserIds[$k]);
+                        }
+                    }
+                    $blockUser->block_user_ids = json_encode($blockUserIds);
+                    $res = $blockUser->update();
+                }
+            }
+        }
+        if ($res) {
+            return $this->writeJson(Status::CODE_OK, Status::$msg[Status::CODE_OK]);
+        } else {
+            return $this->writeJson(Status::CODE_WRONG_RES, Status::$msg[Status::CODE_WRONG_RES]);
         }
     }
 
