@@ -724,6 +724,23 @@ class UserCenter   extends FrontUserController{
         }
     }
 
+    public function blockList()
+    {
+        $authId = !empty($this->auth['id']) ? (int)$this->auth['id'] : 0;
+        $page = !empty($this->params['page']) ? (int)$this->params['page'] : 1;
+        $size = !empty($this->params['size']) ? (int)$this->params['size'] : 20;
+        $blockUsers = null;
+
+        if ($block = UserBlock::create()->where('user_id', $authId)->get()) {
+            $blockUserIds = json_decode($block->block_user_ids, true);
+            if ($blockUserIds) {
+                $blockUsers = AdminUser::create()->field(['id', 'nickname', 'photo', 'level'])->where('id', $blockUserIds, 'in')->limit(($page - 1) * $size, $size);
+            }
+        }
+        return $this->writeJson(Status::CODE_OK, Status::$msg[Status::CODE_OK], $blockUsers);
+
+    }
+
     /**
      * 篮球相关配置
      * @Api(name="篮球相关配置",path="/api/user/basketballSetting",version="3.0")
