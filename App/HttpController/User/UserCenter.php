@@ -730,14 +730,17 @@ class UserCenter   extends FrontUserController{
         $page = !empty($this->params['page']) ? (int)$this->params['page'] : 1;
         $size = !empty($this->params['size']) ? (int)$this->params['size'] : 20;
         $blockUsers = null;
-
+        $return = ['list' => null, 'count' => 0];
         if ($block = UserBlock::create()->where('user_id', $authId)->get()) {
             $blockUserIds = json_decode($block->block_user_ids, true);
             if ($blockUserIds) {
-                $blockUsers = AdminUser::create()->field(['id', 'nickname', 'photo', 'level'])->where('id', $blockUserIds, 'in')->limit(($page - 1) * $size, $size);
+                $blockUsers = AdminUser::create()->field(['id', 'nickname', 'photo', 'level'])->where('id', $blockUserIds, 'in')->limit(($page - 1) * $size, $size)->withTotalCount();
+                $list = $blockUsers->all(null);
+                $count = $blockUsers->lastQueryResult()->getTotalCount();
+                $return = ['list' => $list, 'count' => $count];
             }
         }
-        return $this->writeJson(Status::CODE_OK, Status::$msg[Status::CODE_OK], $blockUsers);
+        return $this->writeJson(Status::CODE_OK, Status::$msg[Status::CODE_OK], $return);
 
     }
 
