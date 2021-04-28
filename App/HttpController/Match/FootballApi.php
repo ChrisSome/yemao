@@ -165,13 +165,28 @@ class FootballApi extends FrontUserController
         list($selectCompetitionIdArr, $interestMatchArr) = AdminUser::getUserShowCompetitionId($uid);
         $response = ['list' => [], 'user_interest_count' => count($interestMatchArr)];
         if (!$selectCompetitionIdArr)   return $this->writeJson(Status::CODE_OK, Status::$msg[Status::CODE_OK], $response);
-        $playingMatch = AdminMatch::create()->where('is_delete', 0)
+        $playingMatchModel = AdminMatch::create()->where('is_delete', 0)
             ->where('competition_id', $selectCompetitionIdArr, 'in')
-            ->where('status_id', self::STATUS_PLAYING, 'in')
-            ->order('match_time', 'ASC')
-            ->all();
+            ->where('status_id', self::STATUS_PLAYING, 'in');
+//            ->order('match_time', 'ASC')
+//            ->all();
+        if (!empty($this->params['competition_ids'])) {
+            $competitionIds = trim($this->params['competition_ids']);
+            $playingMatchModel = $playingMatchModel->where('competition_id in' . $competitionIds);
+        }
+        if (!empty($this->params['team_ids'])) {
+            $teamIdStr = trim($this->params['team_ids']);
+            $playingMatchModel = $playingMatchModel->where('(home_team_id in ' . $teamIdStr . ' or away_team_id in ' . $teamIdStr . ')');
+        }
+        $playingMatch = $playingMatchModel->order('match_time', 'ASC')->all();
         $formatMatch = FrontService::formatMatchThree($playingMatch, $uid, $interestMatchArr);
-        $return = ['list' => $formatMatch, 'user_interest_count' => count($interestMatchArr)];
+        $relationCompetition = array_column($formatMatch, 'competition_name', 'competition_id');
+        $relationHomeTeam = array_column($formatMatch, 'home_team_name', 'home_team_id');
+        $relationAwayTeam = array_column($formatMatch, 'away_team_name', 'away_team_id');
+        $relationTeam = $relationHomeTeam + $relationAwayTeam;
+
+
+        $return = ['list' => $formatMatch, 'user_interest_count' => count($interestMatchArr), 'relationCompetition' => $relationCompetition ?: null, 'relationTeam' => $relationTeam ?: null];
         return $this->writeJson(Status::CODE_OK, Status::$msg[Status::CODE_OK], $return);
     }
 
@@ -193,16 +208,28 @@ class FootballApi extends FrontUserController
         }
         $start = strtotime($this->params['time']);
         $end = $start + 60 * 60 * 24;
-        $model = AdminMatch::create()->where('status_id', self::STATUS_SCHEDULE, 'in')
+        $playingMatchModel = AdminMatch::create()->where('status_id', self::STATUS_SCHEDULE, 'in')
             ->where('match_time', $is_today ? time() : $start, '>=')->where('match_time', $end, '<')
             ->where('is_delete', 0)
             ->where('status_id', 1)
-            ->where('competition_id', $selectCompetitionIdArr, 'in')
-            ->order('match_time', 'ASC')->limit(($page - 1) * $limit, $limit)->withTotalCount();
-        $list = $model->all(null);
-        $total = $model->lastQueryResult()->getTotalCount();
+            ->where('competition_id', $selectCompetitionIdArr, 'in');
+        if (!empty($this->params['competition_ids'])) {
+            $competitionIds = trim($this->params['competition_ids']);
+            $playingMatchModel = $playingMatchModel->where('competition_id in' . $competitionIds);
+        }
+        if (!empty($this->params['team_ids'])) {
+            $teamIdStr = trim($this->params['team_ids']);
+            $playingMatchModel = $playingMatchModel->where('(home_team_id in ' . $teamIdStr . ' or away_team_id in ' . $teamIdStr . ')');
+        }
+        $playingMatchModel = $playingMatchModel->order('match_time', 'ASC')->limit(($page - 1) * $limit, $limit)->withTotalCount();
+        $list = $playingMatchModel->all(null);
+        $total = $playingMatchModel->lastQueryResult()->getTotalCount();
         $formatMatch = FrontService::formatMatchThree($list, $uid, $interestMatchArr);
-        $return = ['list' => $formatMatch, 'count' => $total];
+        $relationCompetition = array_column($formatMatch, 'competition_name', 'competition_id');
+        $relationHomeTeam = array_column($formatMatch, 'home_team_name', 'home_team_id');
+        $relationAwayTeam = array_column($formatMatch, 'away_team_name', 'away_team_id');
+        $relationTeam = $relationHomeTeam + $relationAwayTeam;
+        $return = ['list' => $formatMatch, 'count' => $total, 'relationCompetition' => $relationCompetition ?: null, 'relationTeam' => $relationTeam ?: null];
         return $this->writeJson(Status::CODE_OK, Status::$msg[Status::CODE_OK], $return);
 
 
@@ -231,18 +258,30 @@ class FootballApi extends FrontUserController
         $size = isset($this->params['size']) ? (int)$this->params['size'] : 20;
         $start = strtotime($this->params['time']);
         $end = $start + 60 * 60 * 24;
-        $matches = AdminMatch::create()
+        $playingMatchModel = AdminMatch::create()
             ->where('match_time', $start, '>=')
             ->where('match_time', $end, '<')
             ->where('status_id', self::STATUS_RESULT, 'in')
             ->where('competition_id', $selectCompetitionIdArr, 'in')
-            ->where('is_delete', 0)
-            ->order('match_time', 'DESC')->getLimit($page, $size);
-        $list = $matches->all();
-        $total = $matches->lastQueryResult()->getTotalCount();
+            ->where('is_delete', 0);
 
+        if (!empty($this->params['competition_ids'])) {
+            $competitionIds = trim($this->params['competition_ids']);
+            $playingMatchModel = $playingMatchModel->where('competition_id in' . $competitionIds);
+        }
+        if (!empty($this->params['team_ids'])) {
+            $teamIdStr = trim($this->params['team_ids']);
+            $playingMatchModel = $playingMatchModel->where('(home_team_id in ' . $teamIdStr . ' or away_team_id in ' . $teamIdStr . ')');
+        }
+        $playingMatchModel = $playingMatchModel->order('match_time', 'DESC')->getLimit($page, $size);
+        $list = $playingMatchModel->all();
+        $total = $playingMatchModel->lastQueryResult()->getTotalCount();
         $formatMatch = FrontService::formatMatchThree($list, $uid, $interestMatchArr);
-        $return = ['list' => $formatMatch, 'count' => $total];
+        $relationCompetition = array_column($formatMatch, 'competition_name', 'competition_id');
+        $relationHomeTeam = array_column($formatMatch, 'home_team_name', 'home_team_id');
+        $relationAwayTeam = array_column($formatMatch, 'away_team_name', 'away_team_id');
+        $relationTeam = $relationHomeTeam + $relationAwayTeam;
+        $return = ['list' => $formatMatch, 'count' => $total, 'relationCompetition' => $relationCompetition ?: null, 'relationTeam' => $relationTeam ?: null];
         return $this->writeJson(Status::CODE_OK, Status::$msg[Status::CODE_OK], $return);
 
 

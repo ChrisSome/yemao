@@ -21,6 +21,7 @@ use App\Model\AdminUserSetting;
 use App\Model\ChatHistory;
 use App\Model\UserBlock;
 use App\Utility\Message\Status;
+use easySwoole\Cache\Cache;
 use EasySwoole\Validate\Validate;
 
 use EasySwoole\HttpAnnotation\AnnotationController;
@@ -590,6 +591,38 @@ class UserCenter   extends FrontUserController{
 
     }
 
+    /**
+     * 用户注销
+     */
+    public function userCancel()
+    {
+        $user = AdminUser::create()->where('id', $this->auth['id'])->get();
+        $user->status = AdminUser::STATUS_CANCEL;
+        $user->update();
+        return $this->writeJson(Status::CODE_OK, Status::$msg[Status::CODE_OK]);
+
+    }
+
+    /**
+     * 用户浏览历史记录，只记录帖子及咨询
+     */
+    public function userHistory()
+    {
+        $type = !empty($this->params['type']) ? (int)$this->params['type'] : 1;
+        //帖子记录
+        $format = null;
+        if ($type == 1) {
+            if ($informationHistory = Cache::get('user-history-information-' . $this->auth['id'])) {
+                $format = json_decode($informationHistory, true);
+            }
+        } else if ($type == 2) {
+            if ($informationHistory = Cache::get('user-history-post-' . $this->auth['id'])) {
+                $format = json_decode($informationHistory, true);
+            }
+        }
+        return $this->writeJson(Status::CODE_OK, Status::$msg[Status::CODE_OK], $format);
+
+    }
 
 
     /**

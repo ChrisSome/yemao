@@ -157,6 +157,16 @@ class Community extends FrontUserController
                 ['id'=>$id]);
 
         }
+        if ($this->auth['id']) {
+            $item = ['id' => $id, 'date' => date('Y-m-d')];
+            if ($postIds = Cache::get('user-history-post-' . $this->auth['id'])) {
+                $format = json_decode($postIds, true);
+                array_push($format, $item);
+                Cache::set('user-history-post-' . $this->auth['id'], json_encode(array_slice($format, -20)));
+            } else {
+                Cache::set('user-history-post-' . $this->auth['id'], json_encode($item));
+            }
+        }
         $uid = $this->auth['id'] ? $this->auth['id'] : 0;
         $only_author = isset($this->params['only_author']) ? (int)$this->params['only_author'] : 0;
         $order_type = isset($this->params['order_type']) ? (int)$this->params['order_type'] : 1;

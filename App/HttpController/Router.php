@@ -189,6 +189,8 @@ class Router extends AbstractRouter
             $r->addRoute(['POST'], '/user/userFeedBack', '/User/UserCenter/userFeedBack');   // 用户反馈
             $r->addRoute(['POST'], '/user/userBlock', '/User/UserCenter/userBlock');   //拉黑
             $r->addRoute(['GET'], '/user/blockList', '/User/UserCenter/blockList');   //拉黑列表
+            $r->addRoute(['GET'], '/user/userCancel', '/User/UserCenter/userCancel');   //用户注销
+            $r->addRoute(['GET'], '/user/userHistory', '/User/UserCenter/userHistory');   //用户浏览记录
 
 
 

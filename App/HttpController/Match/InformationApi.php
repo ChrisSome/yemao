@@ -504,6 +504,16 @@ class InformationApi extends FrontUserController
         $information = $informationId > 0 ? Utils::queryHandler(AdminInformation::create(), 'id=?', $informationId) : false;
         if (empty($information)) return $this->writeJson(Status::CODE_W_PARAM, Status::$msg[Status::CODE_W_PARAM]);
         if (intval($information['status']) == AdminInformation::STATUS_DELETE) return $this->writeJson(Status::CODE_WRONG_RES, Status::$msg[Status::CODE_WRONG_RES]);
+        if ($authId) {
+            $item = ['id' => $informationId, 'date' => date('Y-m-d')];
+            if ($informationIds = Cache::get('user-history-information-' . $authId)) {
+                $format = json_decode($informationIds, true);
+                array_push($format, $item);
+                Cache::set('user-history-information-' . $authId, json_encode(array_slice($format, -20)));
+            } else {
+                Cache::set('user-history-information-' . $authId, json_encode($item));
+            }
+        }
         // 填充用户信息
         $information['user_info'] = Utils::queryHandler(AdminUser::create(),
             'id=?', $information['user_id'], 'id,nickname,photo,is_offical,level');
